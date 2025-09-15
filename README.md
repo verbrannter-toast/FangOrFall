@@ -1,2 +1,0 @@
-# FangOrFall
-Software Engineering Project
