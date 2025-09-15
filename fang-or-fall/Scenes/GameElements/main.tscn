@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dgfy2ip0xt6cn" path="res://Scenes/Scripts/main.gd" id="1_fmw02"]
 [ext_resource type="Texture2D" uid="uid://bj2ambwei5ogi" path="res://Assets/bg.png" id="2_fps3c"]
 [ext_resource type="PackedScene" uid="uid://beaa828xfn3nx" path="res://Scenes/GameElements/snake_segment.tscn" id="2_io2sj"]
-[ext_resource type="PackedScene" uid="uid://crhhauqt4di4" path="res://Scenes/GameElements/cameraboundary.tscn" id="3_813uo"]
+[ext_resource type="PackedScene" uid="uid://bhqi1nnqjtyvj" path="res://Scenes/GameElements/cameraboundary.tscn" id="3_813uo"]
 [ext_resource type="PackedScene" uid="uid://tmcq5gpw66gu" path="res://Scenes/GameElements/hud.tscn" id="3_s77pf"]
 [ext_resource type="Texture2D" uid="uid://dxyvfago0gd5f" path="res://Assets/Sprites/apple.png" id="5_sxedt"]
 [ext_resource type="PackedScene" uid="uid://cad25ojl47q8" path="res://Scenes/GameElements/game_over_menu.tscn" id="6_xkat8"]
