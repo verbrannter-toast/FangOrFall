@@ -20,7 +20,7 @@ var snake_data : Array
 var snake : Array
 
 #movement variables
-var start_pos = Vector2(9, 9)
+var start_pos = Vector2(19, 19)
 var up = Vector2(0, -1)
 var down = Vector2(0, 1)
 var left = Vector2(-1, 0)
