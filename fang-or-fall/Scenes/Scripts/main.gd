@@ -7,7 +7,7 @@ var score : int
 var game_started : bool = false
 
 #grid variables
-var cells : int = 20
+var cells : int = 40
 var cell_size : int = 50
 
 #food variables
