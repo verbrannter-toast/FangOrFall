@@ -1,7 +1,7 @@
 extends Camera2D
 
 var main_node
-var follow_speed := 5
+var follow_speed := 3
 
 func _ready():
 	main_node = get_node("/root/Main")

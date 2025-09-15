@@ -17,7 +17,7 @@ snake_scene = ExtResource("2_io2sj")
 [node name="Hud" parent="." instance=ExtResource("3_s77pf")]
 
 [node name="MoveTimer" type="Timer" parent="."]
-wait_time = 0.1
+wait_time = 0.143
 
 [node name="Food" type="Sprite2D" parent="."]
 texture = ExtResource("5_sxedt")

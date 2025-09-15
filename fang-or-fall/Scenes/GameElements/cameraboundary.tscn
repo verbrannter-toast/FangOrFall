@@ -5,8 +5,9 @@
 [node name="Cameraboundary" type="Node2D"]
 
 [node name="Camera2D" type="Camera2D" parent="."]
+ignore_rotation = false
 limit_left = 0
-limit_top = 55
+limit_top = 0
 limit_right = 2000
 limit_bottom = 2050
 editor_draw_limits = true
