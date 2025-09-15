@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://r5ttqaxnuvgk"
-path="res://.godot/imported/MaldiniBold.ttf-cce0e3cae12b8508d03cb12dba036872.fontdata"
+path="res://.godot/imported/MaldiniBold.ttf-4734cabc66bfb3f02d3cf980653ef019.fontdata"
 
 [deps]
 
-source_file="res://assets/MaldiniBold.ttf"
-dest_files=["res://.godot/imported/MaldiniBold.ttf-cce0e3cae12b8508d03cb12dba036872.fontdata"]
+source_file="res://Assets/MaldiniBold.ttf"
+dest_files=["res://.godot/imported/MaldiniBold.ttf-4734cabc66bfb3f02d3cf980653ef019.fontdata"]
 
 [params]
 
