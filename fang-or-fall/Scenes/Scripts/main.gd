@@ -139,6 +139,5 @@ func end_game():
 	game_started = false
 	get_tree().paused = true
 
-
 func _on_game_over_menu_restart():
 	new_game()

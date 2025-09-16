@@ -1,0 +1,66 @@
+[gd_scene load_steps=10 format=3 uid="uid://mdanftybixje"]
+
+[ext_resource type="Texture2D" uid="uid://cvx0nf66nmd1k" path="res://Assets/Sprites/AppleIndicatorArrow.png" id="1_xisdn"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yf7kt"]
+atlas = ExtResource("1_xisdn")
+region = Rect2(0, 0, 310, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_q7765"]
+atlas = ExtResource("1_xisdn")
+region = Rect2(310, 0, 310, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kguge"]
+atlas = ExtResource("1_xisdn")
+region = Rect2(620, 0, 310, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dfibq"]
+atlas = ExtResource("1_xisdn")
+region = Rect2(930, 0, 310, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qckpk"]
+atlas = ExtResource("1_xisdn")
+region = Rect2(1240, 0, 310, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sgmep"]
+atlas = ExtResource("1_xisdn")
+region = Rect2(1550, 0, 310, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wyen0"]
+atlas = ExtResource("1_xisdn")
+region = Rect2(1860, 0, 310, 250)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_t2dxn"]
+animations = [{
+"frames": [{
+"duration": 0.1,
+"texture": SubResource("AtlasTexture_yf7kt")
+}, {
+"duration": 0.4,
+"texture": SubResource("AtlasTexture_q7765")
+}, {
+"duration": 0.4,
+"texture": SubResource("AtlasTexture_kguge")
+}, {
+"duration": 0.4,
+"texture": SubResource("AtlasTexture_dfibq")
+}, {
+"duration": 0.4,
+"texture": SubResource("AtlasTexture_qckpk")
+}, {
+"duration": 0.4,
+"texture": SubResource("AtlasTexture_sgmep")
+}, {
+"duration": 0.4,
+"texture": SubResource("AtlasTexture_wyen0")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="AppleIndicator" type="Node2D"]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_t2dxn")
+frame_progress = 0.02518121

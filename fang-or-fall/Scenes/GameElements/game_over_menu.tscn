@@ -8,14 +8,14 @@ bg_color = Color(0, 0.239216, 0.305882, 1)
 shadow_size = 5
 shadow_offset = Vector2(10, 10)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l65v3"]
-bg_color = Color(0, 0.737255, 0.168627, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8be6j"]
+bg_color = Color(0, 0.611765, 0.172549, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u4ktg"]
 bg_color = Color(0, 0.572549, 0.631373, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8be6j"]
-bg_color = Color(0, 0.611765, 0.172549, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l65v3"]
+bg_color = Color(0, 0.737255, 0.168627, 1)
 
 [node name="GameOverMenu" type="CanvasLayer"]
 script = ExtResource("1_k7vgk")
@@ -64,9 +64,9 @@ offset_right = 124.92
 offset_bottom = 31.8
 theme_override_fonts/font = ExtResource("1_4cjqx")
 theme_override_font_sizes/font_size = 50
-theme_override_styles/hover = SubResource("StyleBoxFlat_l65v3")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_u4ktg")
 theme_override_styles/normal = SubResource("StyleBoxFlat_8be6j")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_u4ktg")
+theme_override_styles/hover = SubResource("StyleBoxFlat_l65v3")
 text = "Play Again"
 
 [connection signal="pressed" from="RestartButton" to="." method="_on_restart_button_pressed"]
