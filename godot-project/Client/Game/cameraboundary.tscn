@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://dcwox7p3bgrjg"]
+
+[ext_resource type="Script" uid="uid://dubryb1qg4i50" path="res://Client/Game/Camera.gd" id="1_e2kjf"]
+
+[node name="Cameraboundary" type="Node2D"]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+ignore_rotation = false
+limit_left = 0
+limit_top = 0
+limit_right = 2000
+limit_bottom = 2050
+editor_draw_limits = true
+script = ExtResource("1_e2kjf")
+
+[node name="RemoteTransform2D" type="RemoteTransform2D" parent="."]
+remote_path = NodePath("../Camera2D")

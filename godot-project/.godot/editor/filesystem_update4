@@ -1,0 +1,8 @@
+res://default_env.tres
+res://Client/Game/Tile.tscn
+res://Client/Client.gd
+res://Client/Game/Game.gd
+res://Client/Game/Tile.gd
+res://Client/Game/Player.gd
+res://MultiplayerFramework/ClientManager.gd
+res://Server/Server.tscn
