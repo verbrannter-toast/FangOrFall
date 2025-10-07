@@ -87,11 +87,6 @@ func move_to_direction():
 	var positions = []
 	var directions = []
 	
-	var next_pos = head + movement
-	
-	# Unerlaubter Schritt nach hinten
-	if next_pos == body[1]:
-		return
 	
 	for i in range(body.size()):
 		positions.append(Vector2(body[i].tile_x, body[i].tile_y))
