@@ -17,7 +17,7 @@ func _ready():
 
 func setup(tile_size: int, player_num: int, _sprite_idx: int):
 	_tile_size = tile_size
-	_player = player_num  # WICHTIG: Das ist die echte Player-Nummer!
+	_player = player_num  # echte Player-Nummer
 	
 	# Startrichtung basierend auf Spieler
 	if player_num == 0:
@@ -25,14 +25,14 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 	else:
 		current_direction = 3  # LEFT
 	
-	# Erstelle Kopf
+	# Kopf
 	var head = create_body()
 	head.is_active = true
 	head.is_head = true
 	head.direction = current_direction
 	head.teleport_to(initial_tile.x, initial_tile.y)
 	
-	# Erstelle 2 Startkörper-Segmente
+	# 2 Startkörper-Segmente
 	for i in range(2):
 		var segment = create_body()
 		segment.is_active = true
@@ -52,7 +52,6 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 func create_body() -> Tile:
 	var tile = TileScene.instantiate()
 	
-	# WICHTIG: Eigenschaften VOR add_child setzen!
 	tile.anchor_left = 0
 	tile.anchor_top = 0
 	tile.anchor_right = 0
@@ -126,29 +125,30 @@ func get_direction_to(from: Vector2, to: Vector2) -> int:
 		return 1 if diff.x > 0 else 3
 
 func grow():
+	# Erstelle neues Segment
 	var new_segment = create_body()
 	
 	if body.size() > 1:
-		# WICHTIG: Alten Schwanz zu normalem Körper machen
-		var old_tail = body[-1]
+		var old_tail_idx = body.size() - 2
+		var old_tail = body[old_tail_idx]
+		
+		# Flags explizit setzen
 		old_tail.is_tail = false
 		old_tail.is_head = false
 		
-		# Neues Segment wird neuer Schwanz
 		new_segment.is_tail = true
 		new_segment.is_head = false
-		new_segment.is_active = false  # Wird erst beim nächsten Move aktiviert
+		new_segment.is_active = false
 		
 		# Position vom vorletzten Segment
-		var ref_tile = body[-2] if body.size() > 2 else body[-1]
+		var ref_tile = body[old_tail_idx]
 		new_segment.teleport_to(ref_tile.tile_x, ref_tile.tile_y)
 		new_segment.prev_direction = ref_tile.direction
 		new_segment.direction = ref_tile.direction
-	
-	# Refresh: Alten Schwanz (jetzt Körper) und neuen Schwanz
-	if body.size() > 1:
-		body[-2].refresh_texture()  # Ex-Schwanz, jetzt Körper
-	body[-1].refresh_texture()  # Neuer Schwanz
+
+		old_tail.refresh_texture()
+
+		new_segment.refresh_texture()
 
 func tick():
 	move_to_direction()

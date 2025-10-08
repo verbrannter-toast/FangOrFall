@@ -1,0 +1,112 @@
+[gd_scene load_steps=9 format=3 uid="uid://cssx4wgc5nvcf"]
+
+[ext_resource type="Script" uid="uid://dyi2jv3kxkuy8" path="res://Client/Game/GameOver.gd" id="1_433oy"]
+[ext_resource type="FontFile" uid="uid://1ltenkggr2qn" path="res://Client/Assets/Cave-Story.ttf" id="1_pb2r8"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_433oy"]
+font = ExtResource("1_pb2r8")
+font_size = 64
+
+[sub_resource type="LabelSettings" id="LabelSettings_bh5m8"]
+font = ExtResource("1_pb2r8")
+font_size = 36
+
+[sub_resource type="LabelSettings" id="LabelSettings_oug5j"]
+font = ExtResource("1_pb2r8")
+font_size = 30
+
+[sub_resource type="LabelSettings" id="LabelSettings_0h3qf"]
+font = ExtResource("1_pb2r8")
+font_size = 46
+
+[sub_resource type="LabelSettings" id="LabelSettings_t2n7i"]
+font = ExtResource("1_pb2r8")
+font_size = 30
+
+[sub_resource type="LabelSettings" id="LabelSettings_8kd2w"]
+font = ExtResource("1_pb2r8")
+font_size = 30
+
+[node name="GameOver" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_433oy")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="GameOverLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "GAME OVER"
+label_settings = SubResource("LabelSettings_433oy")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer" type="Control" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="WinnerLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "PLACEHOLDER"
+label_settings = SubResource("LabelSettings_bh5m8")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer2" type="Control" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="ScoreContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Player1Score" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer"]
+layout_mode = 2
+text = "Player 1: X"
+label_settings = SubResource("LabelSettings_oug5j")
+horizontal_alignment = 1
+
+[node name="VSLabel" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer"]
+layout_mode = 2
+text = " VS "
+label_settings = SubResource("LabelSettings_0h3qf")
+horizontal_alignment = 1
+
+[node name="Player2Score" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer"]
+layout_mode = 2
+text = "Player 2: X"
+label_settings = SubResource("LabelSettings_t2n7i")
+horizontal_alignment = 1
+
+[node name="Spacer3" type="Control" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="InfoLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Returning to menu..."
+label_settings = SubResource("LabelSettings_8kd2w")
+horizontal_alignment = 1

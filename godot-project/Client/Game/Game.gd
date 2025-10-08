@@ -66,23 +66,33 @@ func _process(delta):
 				send_game_state()
 
 func send_game_state():
+	# Safety Check: Nur senden wenn alle Spieler noch valid sind
+	for player in players:
+		if player == null or not is_instance_valid(player):
+			return  # Stop sending if any player is freed
+	
 	var message = Message.new()
 	message.content = {}
 	message.content["host_tick"] = true
 	message.content["directions"] = []
 	
 	for player in get_tree().get_nodes_in_group("players"):
-		message.content["directions"].append(Vector2(player.player, player.current_direction))
+		if player != null and is_instance_valid(player):
+			message.content["directions"].append(Vector2(player.player, player.current_direction))
 	
 	# Food-Positionen
 	message.content["food_positions"] = []
 	for food in foods:
-		message.content["food_positions"].append(Vector2(food.tile_x, food.tile_y))
+		if food != null and is_instance_valid(food):
+			message.content["food_positions"].append(Vector2(food.tile_x, food.tile_y))
 	
 	# Snake-Längen
 	message.content["snake_lengths"] = []
 	for player in players:
-		message.content["snake_lengths"].append(player.body.size())
+		if player != null and is_instance_valid(player) and player.body != null:
+			message.content["snake_lengths"].append(player.body.size())
+		else:
+			message.content["snake_lengths"].append(0)
 	
 	_relay_client.send_data(message)
 
@@ -97,7 +107,7 @@ func spawn_food_tile_at_random():
 	foods.append(tile)
 	tile.refresh_texture()
 
-# NEU: Spawne Food an spezifischer Position
+# Spawne Food
 func spawn_food_at(x: int, y: int):
 	var tile = TileScene.instantiate()
 	add_child(tile)
@@ -108,7 +118,7 @@ func spawn_food_at(x: int, y: int):
 	foods.append(tile)
 	tile.refresh_texture()
 
-# NEU: Sync Food-Positionen vom Host
+# Sync Food-Positionen vom Host
 func sync_food_positions(positions: Array):
 	# Prüfe ob sich was geändert hat
 	if positions.size() != foods.size():
@@ -126,7 +136,7 @@ func sync_food_positions(positions: Array):
 			if foods[i].tile_x != int(pos.x) or foods[i].tile_y != int(pos.y):
 				foods[i].teleport_to(int(pos.x), int(pos.y))
 
-# NEU: Sync Snake-Längen vom Host
+# Sync Snake-Längen vom Host
 func sync_snake_lengths(lengths: Array):
 	for i in range(min(lengths.size(), players.size())):
 		var target_length = lengths[i]
@@ -171,17 +181,29 @@ func tick():
 		player.tick()
 
 func check_game_over():
-	# NUR wenn wirklich nur noch 1 oder 0 Spieler leben
 	if _players_alive <= 1:
-		print("[GAME OVER] Only ", _players_alive, " player(s) alive. Ending game.")
+		print("[GAME OVER] Only ", _players_alive, " player(s) alive.")
 		
+		var winner = -1
+		if _players_alive == 1:
+			for player in players:
+				if player != null and player.body.size() > 0:
+					winner = player.player
+					break
+		
+		print("[GAME OVER] Winner: Player ", winner if winner != -1 else "NONE")
+		
+		# Network-Nachricht
 		if _relay_client != null and is_instance_valid(_relay_client):
 			var message = Message.new()
 			message.content = {}
 			message.content["gameover"] = true
+			message.content["winner"] = winner
 			_relay_client.send_data(message)
 		
-		emit_signal("on_game_over")
+		# Emit Signal MIT Parameter
+		print("[DEBUG] Emitting signal with winner: ", winner)
+		emit_signal("on_game_over", winner)
 
 func check_collisions():
 	var tiles = get_tree().get_nodes_in_group("tiles")

@@ -1,2 +1,10 @@
 res://default_env.tres
+res://Client/Game/Player.gd
+res://Client/Game/Tile.gd
 res://Server/Server.tscn
+res://Client/Game/Game.gd
+res://Client/Game/GameOver.tscn
+res://Client/Client.tscn
+res://Client/Game/GameOver.gd
+res://Client/Client.gd
+res://Client/Game/Game.tscn

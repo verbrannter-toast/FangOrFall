@@ -24,16 +24,66 @@ func _on_players_ready():
 	print("=== PLAYERS READY SIGNAL ===")
 	process_match_start()
 
-func _on_game_over():
-	print("=== GAME OVER ===")
+func _on_game_over(winner: int):
+	print("=== GAME OVER (Client) ===")
+	print("  My Player: ", _relay_client._player_number)
+	
 	if _game == null:
+		print("  ERROR: _game is null!")
 		return
 	
-	_relay_client.disconnect_from_server()
+	# Get scores
+	var scores = [0, 0]
+	for i in range(min(_game.players.size(), 2)):
+		if _game.players[i] != null:
+			scores[i] = _game.players[i].body.size()
 	
-	_game.queue_free()
-	_game = null
+	print("  Scores: ", scores)
+	
+	# Load Game Over Scene
+	var game_over_scene = load("res://Client/Game/GameOver.tscn").instantiate()
+	add_child(game_over_scene)
+	game_over_scene.setup(winner, _relay_client._player_number, scores)
+	game_over_scene.connect("return_to_menu", _return_to_menu)
+	
+	print("  Game Over screen shown")
+
+func _return_to_menu():
+	print("[CLEANUP] Starting cleanup...")
+	
+	# 1. Disconnect
+	if _relay_client != null:
+		_relay_client.disconnect_from_server()
+	
+	# 2. Game löschen
+	if _game != null and is_instance_valid(_game):
+		print("[CLEANUP] Removing game...")
+		_game.queue_free()
+		_game = null
+	
+	# 3. Warte bis Game weg ist
+	await get_tree().process_frame
+	
+	# 4. GameOver Scene löschen
+	print("[CLEANUP] Removing GameOver scenes...")
+	var to_remove = []
+	for child in get_children():
+		if "GameOver" in child.name or child is Control and child.has_signal("return_to_menu"):
+			to_remove.append(child)
+	
+	for child in to_remove:
+		print("[CLEANUP] Removing: ", child.name)
+		child.queue_free()
+	
+	# 5. Warte nochmal
+	await get_tree().process_frame
+	
+	# 6. UI zurücksetzen
+	print("[CLEANUP] Showing start screen...")
+	$Lobby.hide()
 	$StartScreen.show()
+	
+	print("[CLEANUP] Cleanup complete!")
 
 func _on_message(message: Message):
 	if message.server_login:
@@ -45,7 +95,8 @@ func _on_message(message: Message):
 		# Game Over Check
 		if message.content.has("gameover"):
 			print("[CLIENT] Received gameover signal")
-			_on_game_over()
+			var winner = message.content.get("winner", -1)
+			_on_game_over(winner)
 			return
 		
 		# Seed Message
@@ -63,7 +114,11 @@ func process_match_start():
 	
 	_game = load("res://Client/Game/Game.tscn").instantiate()
 	add_child(_game)
-	_game.connect("on_game_over", _on_game_over)
+	
+	# Safe connection
+	if not _game.on_game_over.is_connected(_on_game_over):
+		_game.on_game_over.connect(_on_game_over)
+		print("[DEBUG] Connected on_game_over signal")
 	
 	$Lobby.hide()
 	
@@ -74,7 +129,6 @@ func process_match_start():
 	print("Setting up game:")
 	print("  My ID: ", my_id)
 	print("  My Player Number: ", my_player_number)
-	print("  All Peers: ", peers)
 	
 	_game.setup(my_player_number, _relay_client)
 	

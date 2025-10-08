@@ -29,7 +29,6 @@ var tile_size: int
 
 func _ready():
 	add_to_group("tiles")
-	# Setze Pivot Point nur wenn Size bekannt ist
 	call_deferred("_setup_pivot")
 
 func _setup_pivot():
@@ -37,6 +36,7 @@ func _setup_pivot():
 		pivot_offset = size / 2
 
 func refresh_texture():
+	
 	if is_food:
 		texture = food_texture
 		modulate = Color.WHITE
@@ -48,10 +48,9 @@ func refresh_texture():
 		modulate = Color.WHITE
 		rotation = 0
 		return
-	
-	# Wähle richtige Textur basierend auf Position in Snake
+
 	modulate = Color.WHITE
-	
+
 	if is_head:
 		if head_textures.size() > player:
 			texture = head_textures[player]
@@ -60,18 +59,12 @@ func refresh_texture():
 				texture = body_textures[player]
 			modulate = Color(1.3, 1.3, 1.3, 1.0)
 		
-		# ROTATION für Kopf basierend auf Richtung
-		# Sprite zeigt standardmäßig nach oben (0°)
-		# 0=UP, 1=RIGHT, 2=DOWN, 3=LEFT
+		# ROTATION für Kopf
 		match direction:
-			0:  # UP
-				rotation = 0
-			1:  # RIGHT
-				rotation = PI / 2  # 90°
-			2:  # DOWN
-				rotation = PI  # 180°
-			3:  # LEFT
-				rotation = PI * 3 / 2  # 270°
+			0: rotation = 0
+			1: rotation = PI / 2
+			2: rotation = PI
+			3: rotation = PI * 3 / 2
 				
 	elif is_tail:
 		if tail_textures.size() > player:
@@ -81,21 +74,18 @@ func refresh_texture():
 				texture = body_textures[player]
 			modulate = Color(0.7, 0.7, 0.7, 1.0)
 		
-		# ROTATION für Schwanz (zeigt weg vom Körper)
+		# ROTATION für Schwanz
 		match prev_direction:
-			0:  # Körper ist oben → Schwanz zeigt unten
-				rotation = PI  # 180°
-			1:  # Körper ist rechts → Schwanz zeigt links
-				rotation = PI * 3 / 2  # 270°
-			2:  # Körper ist unten → Schwanz zeigt oben
-				rotation = 0
-			3:  # Körper ist links → Schwanz zeigt rechts
-				rotation = PI / 2  # 90°
+			0: rotation = PI
+			1: rotation = PI * 3 / 2
+			2: rotation = 0
+			3: rotation = PI / 2
 	else:
-		# Normaler Körper - keine Rotation
+		# Normaler Körper
 		if body_textures.size() > player:
+			rotation = 0
 			texture = body_textures[player]
-		rotation = 0
+		modulate = Color.WHITE
 
 func teleport_to(x, y):
 	position = Vector2(x * tile_size, y * tile_size)

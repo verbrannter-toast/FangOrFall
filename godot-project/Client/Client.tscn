@@ -1,8 +1,19 @@
-[gd_scene load_steps=4 format=3 uid="uid://da2pn8pbtx4d2"]
+[gd_scene load_steps=8 format=3 uid="uid://da2pn8pbtx4d2"]
 
 [ext_resource type="PackedScene" path="res://MultiplayerFramework/ClientManager.tscn" id="1"]
 [ext_resource type="Script" uid="uid://2mq7aqucwth3" path="res://Client/Client.gd" id="2"]
 [ext_resource type="FontFile" path="res://Client/Assets/title_font.tres" id="3"]
+[ext_resource type="FontFile" uid="uid://1ltenkggr2qn" path="res://Client/Assets/Cave-Story.ttf" id="4_rkxef"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_lhopr"]
+font = ExtResource("4_rkxef")
+font_size = 64
+
+[sub_resource type="InputEventKey" id="InputEventKey_pu34a"]
+keycode = 4194309
+
+[sub_resource type="Shortcut" id="Shortcut_ubx57"]
+events = [SubResource("InputEventKey_pu34a")]
 
 [node name="Client" type="Control"]
 layout_mode = 3
@@ -20,10 +31,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -50.0
-offset_top = -70.0
-offset_right = -50.0
-offset_bottom = -70.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -38,12 +45,14 @@ offset_top = -187.635
 offset_right = 180.5
 offset_bottom = -135.635
 theme_override_fonts/font = ExtResource("3")
-text = "Snake Versus"
+text = "Fang Or Fall"
+label_settings = SubResource("LabelSettings_lhopr")
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="StartGameButton" type="Button" parent="StartScreen"]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -53,7 +62,8 @@ offset_top = -31.5
 offset_right = 117.0
 offset_bottom = 31.5
 theme_override_fonts/font = ExtResource("3")
-text = "Start Game"
+shortcut = SubResource("Shortcut_ubx57")
+text = "Search for a Game"
 
 [node name="Lobby" type="Control" parent="."]
 visible = false

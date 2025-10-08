@@ -1,3 +1,7 @@
-Camera2D
-VBoxContainer
 Control
+Label
+HBoxContainer
+VBoxContainer
+CenterContainer
+ColorRect
+Camera2D
