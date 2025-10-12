@@ -29,6 +29,8 @@ func setup(winner_player: int, my_player_number: int, player_scores: Array):
 	my_player = my_player_number
 	scores = player_scores
 	
+	print("[GAMEOVER] Setup called - Winner:", winner, " MyPlayer:", my_player)
+	
 	# Winner Text
 	if winner == -1:
 		winner_label.text = "DRAW!"
@@ -41,8 +43,10 @@ func setup(winner_player: int, my_player_number: int, player_scores: Array):
 		winner_label.add_theme_color_override("font_color", Color.RED)
 	
 	# Scores
-	player1_score.text = "Player 1: " + str(scores[0])
-	player2_score.text = "Player 2: " + str(scores[1])
+	if player1_score != null and scores.size() >= 1:
+		player1_score.text = "Player 1: " + str(scores[0]) + " points"
+	if player2_score != null and scores.size() >= 2:
+		player2_score.text = "Player 2: " + str(scores[1]) + " points"
 	
 	start_countdown(5)
 
