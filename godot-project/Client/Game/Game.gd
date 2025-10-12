@@ -17,7 +17,7 @@ var _players_alive: int
 
 var foods = []
 var players = []
-var player_scores: Array = []
+var player_scores = []
 
 signal on_game_over
 
@@ -169,7 +169,7 @@ func sync_scores(scores: Array):
 			player_scores[i] = scores[i]
 		print("[SYNC] Scores updated: ", player_scores)
 
-func rand_free_pos():
+func rand_free_pos(): # for Apple Spawning
 	var occupied = []
 	
 	for player in players:
@@ -231,7 +231,7 @@ func check_game_over():
 			_relay_client.send_data(message)
 		
 		print("[DEBUG] Emitting signal with winner: ", winner)
-		emit_signal("on_game_over")
+		emit_signal("on_game_over", winner, player_scores)
 
 func check_collisions():
 	var tiles = get_tree().get_nodes_in_group("tiles")
@@ -268,7 +268,7 @@ func check_collisions():
 					
 					# Player wächst
 					players[head_tile.player].grow()
-					player_scores[_player_number] += 1
+					player_scores[head_tile.player] += 1
 					
 					# Nur Host bewegt Food
 					if _is_host:

@@ -2,3 +2,4 @@ res://default_env.tres
 res://Client/Client.tscn
 res://Client/Client.gd
 res://Client/Game/Game.gd
+res://Client/Game/Game.tscn

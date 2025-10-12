@@ -33,7 +33,7 @@ func _on_game_over(winner: int, scores: Array):
 		return
 	
 	# Lade Game Over Scene
-	var game_over_scene = load("res://Client/GameOver.tscn").instantiate()
+	var game_over_scene = load("res://Client/Game/GameOver.tscn").instantiate()
 	add_child(game_over_scene)
 	game_over_scene.setup(winner, _relay_client._player_number, scores)
 	game_over_scene.connect("return_to_menu", _return_to_menu)
