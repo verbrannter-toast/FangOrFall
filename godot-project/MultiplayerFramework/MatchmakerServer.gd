@@ -27,8 +27,16 @@ func _ready():
 		set_process(false)
 		return
 	
-	print("✓ Server listening on port ", PORT)
+	print("Server listening on port ", PORT)
+	print("Connect clients to: ", _get_local_ip(), ":", PORT)
 	_logger_coroutine()
+
+func _get_local_ip() -> String:
+	var ip_list = IP.get_local_addresses()
+	for ip in ip_list:
+		if ip.begins_with("192.168.") or ip.begins_with("10."):
+			return ip
+	return "localhost"
 
 func _logger_coroutine():
 	while true:

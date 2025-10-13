@@ -2,7 +2,7 @@ extends Node
 
 class_name ClientManager
 
-@export var websocket_url: String = "localhost"
+@export var websocket_url: String = "192.168.178.130"
 @export var port: int = 9080
 
 var _match = []
