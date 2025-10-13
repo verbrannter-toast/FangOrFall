@@ -1,0 +1,31 @@
+[gd_scene load_steps=4 format=3 uid="uid://cpdguk8xt7p06"]
+
+[ext_resource type="Script" uid="uid://dnpdjj1gy5lm4" path="res://Client/Game/Game.gd" id="1"]
+[ext_resource type="Script" uid="uid://c1jxw0hk1xfo6" path="res://Client/Game/PlayerInput.gd" id="2"]
+[ext_resource type="Script" uid="uid://bevfrm7jbdnfd" path="res://Client/Game/Player.gd" id="3"]
+
+[node name="GridMap" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+round_tick = 0.2
+map_width = 30
+map_height = 30
+
+[node name="Player" type="Control" parent="."]
+anchors_preset = 0
+script = ExtResource("3")
+initial_tile = Vector2(1, 10)
+
+[node name="Player2" type="Control" parent="."]
+anchors_preset = 0
+script = ExtResource("3")
+player = 1
+initial_tile = Vector2(16, 10)
+
+[node name="PlayerInput" type="Node" parent="."]
+script = ExtResource("2")
