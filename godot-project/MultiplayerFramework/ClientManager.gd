@@ -2,8 +2,8 @@ extends Node
 
 class_name ClientManager
 
-@export var websocket_url: String = "192.168.178.130"
-@export var port: int = 9080
+@export var websocket_url: String = "https://bonnily-polyzoic-brittaney.ngrok-free.dev"
+@export var port: int = 8080
 
 var _match = []
 var _id = 0
@@ -37,7 +37,36 @@ func send_data(message: Message):
 		emit_signal("on_message", message)
 
 func connect_to_server():
-	uri = "ws://" + websocket_url + ":" + str(port)
+	# Clean the URL
+	var clean_url = websocket_url.strip_edges()
+	clean_url = clean_url.replace("https://", "")
+	clean_url = clean_url.replace("http://", "")
+	clean_url = clean_url.replace("ws://", "")
+	clean_url = clean_url.replace("wss://", "")
+	
+	# Remove port from URL if present
+	if ":" in clean_url:
+		var parts = clean_url.split(":")
+		clean_url = parts[0]
+		# Optionally extract port from URL
+		if parts.size() > 1:
+			var url_port = parts[1].to_int()
+			if url_port > 0:
+				port = url_port
+	
+	# Remove trailing slash
+	clean_url = clean_url.trim_suffix("/")
+	
+	# Determine if this is a secure connection (ngrok, production)
+	var is_secure = not (clean_url == "localhost" or clean_url.begins_with("127.0.0.1") or clean_url.begins_with("192.168.") or clean_url.begins_with("10."))
+	
+	# Build WebSocket URI
+	if is_secure:
+		# ngrok or production - use WSS on port 443 (default, no need to specify)
+		uri = "wss://" + clean_url
+	else:
+		# Local development - use WS with specified port
+		uri = "ws://" + clean_url + ":" + str(port)
 	
 	print("Connecting to: ", uri)
 	
@@ -51,7 +80,11 @@ func connect_to_server():
 
 	var err = _client.connect_to_url(uri)
 	if err != OK:
-		print("ERROR: Failed to connect: ", err)
+		print("ERROR: Failed to connect - Error code: ", err)
+		print("Possible reasons:")
+		print("  - Server not running")
+		print("  - Wrong URL or port")
+		print("  - Firewall blocking connection")
 		set_process(false)
 	else:
 		print("WebSocket connection initiated...")
