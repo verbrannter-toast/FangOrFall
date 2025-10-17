@@ -1,2 +1,5 @@
 res://default_env.tres
 res://Server/Server.tscn
+res://Client/Game/Main.gd
+res://MultiplayerFramework/MatchmakerServer.gd
+res://Client/Game/Main.tscn

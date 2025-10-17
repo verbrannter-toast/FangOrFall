@@ -2,7 +2,7 @@ extends Node
 
 @export var match_size: int = 2
 
-const PORT = 9080
+var PORT = 9080
 var _server = TCPServer.new()
 var _peers = {}
 var _connected_players = {}
@@ -16,18 +16,26 @@ signal match_created(player_ids: Array)
 signal message_received(from_id: int, message_type: String)
 
 func _ready():
+	var env_port = OS.get_environment("PORT")
+	if env_port != "":
+		PORT = int(env_port)
+		print("Using PORT from environment: ", PORT)
+	else:
+		print("Using default PORT: ", PORT)
+	
 	print("=== MATCHMAKING SERVER ===")
 	print("Starting on port ", PORT)
 	print("Match size: ", match_size, " players")
 	print("========================")
 	
-	var err = _server.listen(PORT)
+	# Listen on all interfaces (wichtig für Railway)
+	var err = _server.listen(PORT, "*")
 	if err != OK:
 		print("ERROR: Unable to start server: ", err)
 		set_process(false)
 		return
 	
-	print("✓ Server listening on port ", PORT)
+	print("Server listening on port ", PORT)
 	_logger_coroutine()
 
 func _logger_coroutine():
