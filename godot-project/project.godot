@@ -17,7 +17,7 @@ IsClient=true
 [application]
 
 config/name="Snake Versus"
-run/main_scene="uid://iamn73sp27vm"
+run/main_scene="uid://u3noe7oe1f16"
 config/features=PackedStringArray("4.5")
 
 [display]
