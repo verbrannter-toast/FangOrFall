@@ -1,5 +1,4 @@
 res://default_env.tres
-res://Client/Client.gd
+res://Server/Server.tscn
+res://MultiplayerFramework/MatchmakerServer.gd
 res://MultiplayerFramework/ClientManager.gd
-res://Client/Game/Game.tscn
-res://Client/Game/PlayerInput.gd

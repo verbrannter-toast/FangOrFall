@@ -2,8 +2,8 @@ extends Node
 
 class_name ClientManager
 
-@export var websocket_url: String = "https://bonnily-polyzoic-brittaney.ngrok-free.dev"
-@export var port: int = 8080
+@export var websocket_url: String = "fangorfall-production.up.railway.app"
+@export var port: int = 443
 
 var _match = []
 var _id = 0
