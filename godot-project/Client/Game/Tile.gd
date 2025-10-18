@@ -4,10 +4,10 @@ class_name Tile
 
 @export var is_disabled: bool = false
 
-# Separate Texturen für Kopf, Körper und Schwanz
-@export var head_textures: Array[Texture2D] = []  # [Player0, Player1, Player2, Player3]
-@export var body_textures: Array[Texture2D] = []  # [Player0, Player1, Player2, Player3]
-@export var tail_textures: Array[Texture2D] = []  # [Player0, Player1, Player2, Player3]
+# Separate Texturen
+@export var head_textures: Array[Texture2D] = []
+@export var body_textures: Array[Texture2D] = []
+@export var tail_textures: Array[Texture2D] = []
 
 @export var wall_texture: Texture2D
 @export var food_texture: Texture2D
@@ -18,25 +18,25 @@ var player: int = -1
 var is_food: bool = false
 var is_active: bool = false
 
-# Richtungen für zukünftige Rotation (optional)
+# Richtungen
 var direction: int = 1
 var next_direction: int = 1
 var prev_direction: int = 1
 
-var tile_x: int
-var tile_y: int
-var tile_size: int
+var tile_x: int = 0
+var tile_y: int = 0
+var tile_size: int = 0  # Muss gesetzt werden!
 
 func _ready():
 	add_to_group("tiles")
 	call_deferred("_setup_pivot")
+	print("[TILE] _ready() called - tile_size: ", tile_size)  # DEBUG
 
 func _setup_pivot():
 	if size.x > 0 and size.y > 0:
 		pivot_offset = size / 2
 
 func refresh_texture():
-	
 	if is_food:
 		texture = food_texture
 		modulate = Color.WHITE
@@ -88,14 +88,28 @@ func refresh_texture():
 		modulate = Color.WHITE
 
 func teleport_to(x, y):
-	position = Vector2(x * tile_size, y * tile_size)
 	tile_x = x
 	tile_y = y
+	
+	# KRITISCH: tile_size muss gesetzt sein!
+	if tile_size == 0:
+		print("[TILE ERROR] tile_size is 0! Cannot calculate position for grid(", x, ",", y, ")")
+		position = Vector2.ZERO
+		return
+	
+	position = Vector2(x * tile_size, y * tile_size)
+	print("[TILE] Teleported to grid(", x, ",", y, ") -> pixel(", position, ") with tile_size=", tile_size)
 
 func move_to(x, y):
-	var tween = create_tween()
-	tween.tween_property(self, "position", Vector2(x * tile_size, y * tile_size), 0.2)
-	tween.set_trans(Tween.TRANS_CUBIC)
-	
 	tile_x = x
 	tile_y = y
+	
+	if tile_size == 0:
+		print("[TILE ERROR] tile_size is 0! Cannot move!")
+		return
+	
+	var target_pos = Vector2(x * tile_size, y * tile_size)
+	
+	var tween = create_tween()
+	tween.tween_property(self, "position", target_pos, 0.2)
+	tween.set_trans(Tween.TRANS_CUBIC)

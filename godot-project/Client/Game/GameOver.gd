@@ -1,4 +1,4 @@
-extends Control
+extends CanvasLayer
 
 @onready var winner_label = $CenterContainer/VBoxContainer/WinnerLabel
 @onready var player1_score = $CenterContainer/VBoxContainer/ScoreContainer/Player1Score
@@ -10,19 +10,6 @@ var my_player: int = 0
 var scores: Array = [0, 0]  # [Player0, Player1]
 
 signal return_to_menu
-
-func _ready():
-	anchor_right = 1.0
-	anchor_bottom = 1.0
-	offset_left = 0
-	offset_top = 0
-	offset_right = 0
-	offset_bottom = 0
-	
-	# Fade-in Animation
-	modulate.a = 0
-	var tween = create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.5)
 
 func setup(winner_player: int, my_player_number: int, player_scores: Array):
 	winner = winner_player

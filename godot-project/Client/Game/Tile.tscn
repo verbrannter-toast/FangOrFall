@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://dbyn2b0ox0t6j"]
+[gd_scene load_steps=10 format=3 uid="uid://dbyn2b0ox0t6j"]
 
 [ext_resource type="Texture2D" uid="uid://cjbukms0ymeuf" path="res://icon.png" id="1"]
 [ext_resource type="Script" uid="uid://df4t8i31qiuo6" path="res://Client/Game/Tile.gd" id="2"]
@@ -9,7 +9,6 @@
 [ext_resource type="Texture2D" uid="uid://ci01tgkjd6p3x" path="res://Client/Assets/Tiles/SnakeTail-Blue.svg" id="7_hiy2x"]
 [ext_resource type="Texture2D" uid="uid://cbyynsukaoqdr" path="res://Client/Assets/Tiles/SnakeFood.svg" id="8_o2vq7"]
 [ext_resource type="Texture2D" uid="uid://bqys66w7g1s3g" path="res://Client/Assets/Tiles/SnakeTail-Red.svg" id="8_ow0ht"]
-[ext_resource type="Texture2D" uid="uid://cv172632bs14h" path="res://Client/Assets/Tiles/Wall.svg" id="9_xw21i"]
 
 [node name="Tile" type="TextureRect"]
 texture = ExtResource("1")
@@ -18,5 +17,4 @@ script = ExtResource("2")
 head_textures = Array[Texture2D]([ExtResource("3_gtaxa"), ExtResource("4_q0kjo")])
 body_textures = Array[Texture2D]([ExtResource("5_iyxmr"), ExtResource("6_cdd4g")])
 tail_textures = Array[Texture2D]([ExtResource("7_hiy2x"), ExtResource("8_ow0ht")])
-wall_texture = ExtResource("9_xw21i")
 food_texture = ExtResource("8_o2vq7")

@@ -1,6 +1,6 @@
 extends Control
 
-@export var round_tick: float = 0.5
+@export var round_tick: float = 0.2
 @export var map_width: int = 18
 @export var map_height: int = 12
 
@@ -19,6 +19,9 @@ var foods = []
 var players = []
 var player_scores = []
 
+@onready var tilemap: TileMap = $TileMap
+@onready var camera: Camera2D = $Camera2D
+
 signal on_game_over
 
 func setup(player_number: int, relay_client: ClientManager):
@@ -26,8 +29,23 @@ func setup(player_number: int, relay_client: ClientManager):
 	_relay_client = relay_client
 	_player_number = player_number
 	
+	if tilemap:
+		var used_rect = tilemap.get_used_rect()
+		map_width = used_rect.size.x
+		map_height = used_rect.size.y
+		print("[SETUP] Map size from TileMap: ", map_width, "x", map_height)
+	
+	# Tile-Größe berechnen
 	tile_size = int(size.y / map_height)
-	position.x = (size.x - (tile_size * map_width)) / 2.0
+	print("[SETUP] Calculated tile_size: ", tile_size)
+	
+	# Skaliere TileMap
+	if tilemap:
+		var svg_size = 16.0
+		var scale_factor = tile_size / svg_size
+		tilemap.scale = Vector2(scale_factor, scale_factor)
+		tilemap.position = Vector2.ZERO
+		print("[SETUP] TileMap scale: ", tilemap.scale)
 	
 	players = get_tree().get_nodes_in_group("players")
 	_players_alive = players.size()
@@ -37,24 +55,18 @@ func setup(player_number: int, relay_client: ClientManager):
 	for i in range(players.size()):
 		player_scores.append(0)
 	
-	# Alle Spieler bekommen ihre echte Player-Nummer!
+	# Setup players
 	for i in range(players.size()):
-		players[i].setup(tile_size, i, i)  # Hier wird sprite_idx übergeben aber nicht genutzt
+		players[i].setup(tile_size, i, i)
+	
+	#Setup camera
+	if camera:
+		camera.setup(player_number)
 	
 	$PlayerInput.player = players[player_number]
 	$PlayerInput.is_host = _is_host
 	$PlayerInput.relay_client = relay_client
-	
-	# Erstelle Wände
-	for n in range(map_width):
-		for m in range(map_height):
-			if n == 0 or m == 0 or n == map_width - 1 or m == map_height - 1:
-				var tile = TileScene.instantiate()
-				add_child(tile)
-				tile.refresh_texture()
-				tile.size = Vector2.ONE * tile_size
-				tile.tile_size = tile_size
-				tile.teleport_to(n, m)
+
 
 func _set_direction(player_number: int, direction: int):
 	if players[player_number] != null:
@@ -170,8 +182,16 @@ func sync_scores(scores: Array):
 		print("[SYNC] Scores updated: ", player_scores)
 
 func rand_free_pos(): # for Apple Spawning
+	# Spawn-Grenzen (1 Tile vom Rand)
+	var spawn_min_x = 1
+	var spawn_min_y = 1
+	var spawn_max_x = map_width - 2
+	var spawn_max_y = map_height - 2
+	
+	# Sammle besetzte Positionen
 	var occupied = []
 	
+	# Snake-Positionen
 	for player in players:
 		if player == null or not is_instance_valid(player):
 			continue
@@ -180,23 +200,43 @@ func rand_free_pos(): # for Apple Spawning
 		
 		for tile in player.body:
 			if tile != null and is_instance_valid(tile):
-				occupied.append(Vector2(tile.tile_x, tile.tile_y))
+				occupied.append(Vector2i(tile.tile_x, tile.tile_y))
 	
+	# Food-Positionen
 	for food in foods:
-		occupied.append(Vector2(food.tile_x, food.tile_y))
+		if food != null and is_instance_valid(food):
+			occupied.append(Vector2i(food.tile_x, food.tile_y))
 	
-	var rand_pos = Vector2.ZERO
+	# Wände
+	if tilemap:
+		for x in range(spawn_min_x, spawn_max_x + 1):
+			for y in range(spawn_min_y, spawn_max_y + 1):
+				if is_wall_at(Vector2i(x, y)):
+					occupied.append(Vector2i(x, y))
+	
+	# Suche freie Position
+	var max_tries = 500
 	var tries = 0
-	while true:
-		rand_pos = Vector2(2 + randi() % (map_width - 4), 2 + randi() % (map_height - 4))
-		if not occupied.has(rand_pos):
-			break
-		else:
-			tries += 1
-		if tries > 50:
-			break
 	
-	return rand_pos
+	while tries < max_tries:
+		var rand_x = randi_range(spawn_min_x, spawn_max_x)
+		var rand_y = randi_range(spawn_min_y, spawn_max_y)
+		var rand_pos = Vector2i(rand_x, rand_y)
+		
+		if not occupied.has(rand_pos):
+			return Vector2(rand_pos.x, rand_pos.y)
+		
+		tries += 1
+	
+	print("[FOOD SPAWN] ERROR: Could not find free position after ", max_tries, " tries!")
+	return Vector2(spawn_min_x + 2, spawn_min_y + 2)
+
+func is_wall_at(pos: Vector2i) -> bool:
+	if not tilemap:
+		return false
+	
+	var cell = tilemap.get_cell_source_id(0, pos)
+	return cell != -1
 
 func tick():
 	if _players_alive <= 1:
@@ -244,6 +284,14 @@ func check_collisions():
 			continue
 		
 		var pos = Vector2(tile.tile_x, tile.tile_y)
+		
+		# Prüfe Kollision mit TileMap-Wänden
+		if tilemap and is_wall_at(Vector2i(pos)):
+			if tile.is_head:
+				print("[WALL COLLISION] Player ", tile.player, " hit wall at ", pos)
+				mark_for_deletion.append(tile)
+				continue
+		
 		if not tile_positions.has(pos):
 			tile_positions[pos] = tile
 		else:
