@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://gxr7ishrla2f"]
+
+[ext_resource type="Script" uid="uid://dtklsjq1eiseq" path="res://Client/Game/CountdownUI.gd" id="1_xmdfu"]
+
+[node name="CountdownUI" type="CanvasLayer"]
+script = ExtResource("1_xmdfu")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="CountdownLabel" type="Label" parent="CenterContainer"]
+layout_mode = 2
