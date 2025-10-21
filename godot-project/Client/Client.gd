@@ -1,6 +1,7 @@
 extends Control
 
 var _relay_client: ClientManager
+var _game_over_triggered: bool = false
 var _game
 
 func _ready():
@@ -25,6 +26,13 @@ func _on_players_ready():
 	process_match_start()
 
 func _on_game_over(winner: int, scores: Array):
+	# Verhindere doppelten Aufruf
+	if _game_over_triggered:
+		print("[CLIENT] Game over already triggered, ignoring")
+		return
+	
+	_game_over_triggered = true
+	
 	print("=== GAME OVER ===")
 	print("Winner: Player ", winner if winner != -1 else "NONE")
 	print("Scores: ", scores)
@@ -32,7 +40,6 @@ func _on_game_over(winner: int, scores: Array):
 	if _game == null:
 		return
 	
-	# Lade Game Over Scene
 	var game_over_scene = load("res://Client/Game/GameOver.tscn").instantiate()
 	add_child(game_over_scene)
 	game_over_scene.setup(winner, _relay_client._player_number, scores)

@@ -172,9 +172,16 @@ func sync_snake_lengths(lengths: Array):
 		var target_length = lengths[i]
 		var current_length = players[i].body.size()
 		
-		# Nur wachsen wenn wirklich nötig
+		# Nur wachsen wenn Unterschied vorhanden
 		if current_length < target_length:
 			var grow_amount = target_length - current_length
+			
+			# Mehrfaches Wachstum bedeutet Desync
+			if grow_amount > 1:
+				print("[SYNC WARNING] Player ", i, " length difference is ", grow_amount, " (should be max 1!)")
+				# Nur um 1 wachsen, nicht mehr
+				grow_amount = 1
+			
 			print("[SYNC] Player ", i, " grows by ", grow_amount)
 			for j in range(grow_amount):
 				players[i].grow()
@@ -253,27 +260,33 @@ func tick():
 		player.tick()
 
 func check_game_over():
+	# Game Over when max 1 player is alive
 	if _players_alive <= 1:
 		print("[GAME OVER] Only ", _players_alive, " player(s) alive.")
 		
 		var winner = -1
+		
 		if _players_alive == 1:
+			# find both surviving players
 			for player in players:
-				if player != null and player.body.size() > 0:
+				if player != null and is_instance_valid(player) and player.body.size() > 0:
 					winner = player.player
+					print("[GAME OVER] Survivor found: Player ", winner)
 					break
+		else:
+			# _players_alive == 0 -> DRAW
+			print("[GAME OVER] No survivors - DRAW")
 		
 		print("[GAME OVER] Winner: Player ", winner if winner != -1 else "NONE")
 		
-		# Network-Nachricht
-		if _relay_client != null and is_instance_valid(_relay_client):
-			var message = Message.new()
-			message.content = {}
-			message.content["gameover"] = true
-			message.content["winner"] = winner
-			_relay_client.send_data(message)
+		if _is_host:
+			if _relay_client != null and is_instance_valid(_relay_client):
+				var message = Message.new()
+				message.content = {}
+				message.content["gameover"] = true
+				message.content["winner"] = winner
+				_relay_client.send_data(message)
 		
-		print("[DEBUG] Emitting signal with winner: ", winner)
 		emit_signal("on_game_over", winner, player_scores)
 
 func check_collisions():
