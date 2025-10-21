@@ -7,3 +7,7 @@ res://Client/Game/PlayerInput.gd
 res://Client/Game/Tile.gd
 res://MultiplayerFramework/ClientManager.gd
 res://MultiplayerFramework/MatchmakerServer.gd
+res://Client/Assets/Tiles/TileSet-BlueBricks.tres
+res://Client/Assets/Tiles/TileSet-Floor.tres
+res://default_env.tres
+res://Client/Game/GameOver.tscn
