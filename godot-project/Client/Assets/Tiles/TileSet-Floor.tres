@@ -1,0 +1,26 @@
+[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://dfnwlayaq4on4"]
+
+[ext_resource type="Texture2D" uid="uid://xv6q267kb238" path="res://Client/Assets/Tiles/FloorSet.png" id="1_8a1go"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_r5jd5"]
+resource_name = "BlueTiles"
+texture = ExtResource("1_8a1go")
+0:0/0 = 0
+0:0/0/probability = 0.25
+1:0/0 = 0
+1:0/0/probability = 0.25
+2:0/0 = 0
+2:0/0/probability = 0.25
+3:0/0 = 0
+3:0/0/probability = 0.25
+0:1/0 = 0
+0:1/0/probability = 0.25
+1:1/0 = 0
+1:1/0/probability = 0.25
+2:1/0 = 0
+2:1/0/probability = 0.25
+3:1/0 = 0
+3:1/0/probability = 0.25
+
+[resource]
+sources/0 = SubResource("TileSetAtlasSource_r5jd5")

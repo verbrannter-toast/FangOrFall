@@ -1,11 +1,5 @@
 res://default_env.tres
 res://Client/Game/Game.tscn
 res://Client/Assets/Tiles/TileSet-BlueBricks.tres
+res://Client/Assets/Tiles/TileSet-Floor.tres
 res://Client/Game/Game.gd
-res://Client/Game/Player.gd
-res://Client/Game/Camera.gd
-res://Client/Game/Tile.gd
-res://Client/Game/GameOver.gd
-res://Client/Game/GameOver.tscn
-res://Client/Game/SpawnPoint.gd
-res://Client/Assets/Tiles/SpawnPoint.tscn

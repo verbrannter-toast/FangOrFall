@@ -19,7 +19,7 @@ var foods = []
 var players = []
 var player_scores = []
 
-@onready var tilemap: TileMap = $TileMap
+@onready var tilemap: TileMap = $"TileMap-Walls"
 @onready var camera: Camera2D = $Camera2D
 
 signal on_game_over
