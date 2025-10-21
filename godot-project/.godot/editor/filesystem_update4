@@ -11,3 +11,4 @@ res://Client/Assets/Tiles/TileSet-BlueBricks.tres
 res://Client/Assets/Tiles/TileSet-Floor.tres
 res://default_env.tres
 res://Client/Game/GameOver.tscn
+res://Client/Game/Game.tscn
