@@ -15,9 +15,12 @@ var _player_number: int
 var _player_is_dead: bool
 var _players_alive: int
 
+var _game_over_sent: bool = false
+
 var foods = []
 var players = []
 var player_scores = []
+var players_dead = []
 
 @onready var tilemap: TileMap = $"TileMap-Walls"
 @onready var camera: Camera2D = $Camera2D
@@ -28,41 +31,47 @@ func setup(player_number: int, relay_client: ClientManager):
 	_is_host = player_number == 0
 	_relay_client = relay_client
 	_player_number = player_number
+	_game_over_sent = false
 	
 	tile_size = int(size.y / map_height)
 	
-	print("[SETUP] Viewport size: ", size)
-	print("[SETUP] Map dimensions: ", map_width, "x", map_height)
-	print("[SETUP] Calculated tile_size: ", tile_size)
-	
+	# Map-Größe von TileMap ableiten
 	if tilemap:
 		var used_rect = tilemap.get_used_rect()
 		map_width = used_rect.size.x
 		map_height = used_rect.size.y
 		print("Map size from TileMap: ", map_width, "x", map_height)
 	
-	# recalculate in case size has changed
 	tile_size = int(size.y / map_height)
 	position.x = (size.x - (tile_size * map_width)) / 2.0
 	
+	# Skaliere TileMap
 	if tilemap:
 		var svg_size = 16.0
 		var scale_factor = tile_size / svg_size
-		
 		tilemap.scale = Vector2(scale_factor, scale_factor)
 		tilemap.position = Vector2.ZERO
 	
+	# WICHTIG: Hole Players ZUERST
 	players = get_tree().get_nodes_in_group("players")
 	_players_alive = players.size()
 	
-	# Initialize scores
+	print("[SETUP] Found ", players.size(), " players")
+	
+	# DANN initialisiere Arrays basierend auf players.size()
 	player_scores = []
+	players_dead = []
+	
 	for i in range(players.size()):
 		player_scores.append(0)
+		players_dead.append(false)
+	
+	print("[SETUP] Initialized arrays for ", players.size(), " players")
+	print("[SETUP] players_dead: ", players_dead)
 	
 	# Setup players
 	for i in range(players.size()):
-		players[i].setup(tile_size, i, i)  # Hier wird sprite_idx übergeben aber nicht genutzt
+		players[i].setup(tile_size, i, i)
 	
 	# Setup camera
 	if camera:
@@ -172,14 +181,12 @@ func sync_snake_lengths(lengths: Array):
 		var target_length = lengths[i]
 		var current_length = players[i].body.size()
 		
-		# Nur wachsen wenn Unterschied vorhanden
 		if current_length < target_length:
 			var grow_amount = target_length - current_length
 			
-			# Mehrfaches Wachstum bedeutet Desync
+			# Max 1 pro Sync
 			if grow_amount > 1:
 				print("[SYNC WARNING] Player ", i, " length difference is ", grow_amount, " (should be max 1!)")
-				# Nur um 1 wachsen, nicht mehr
 				grow_amount = 1
 			
 			print("[SYNC] Player ", i, " grows by ", grow_amount)
@@ -260,25 +267,34 @@ func tick():
 		player.tick()
 
 func check_game_over():
-	# Game Over when max 1 player is alive
+	# Nur einmal ausführen
+	if _game_over_sent:
+		return
+	
 	if _players_alive <= 1:
 		print("[GAME OVER] Only ", _players_alive, " player(s) alive.")
 		
 		var winner = -1
 		
+		# Prüfe wer NICHT tot ist
 		if _players_alive == 1:
-			# find both surviving players
-			for player in players:
-				if player != null and is_instance_valid(player) and player.body.size() > 0:
-					winner = player.player
-					print("[GAME OVER] Survivor found: Player ", winner)
+			for i in range(players.size()):
+				if i >= players_dead.size():
+					print("[WARNING] players_dead array too small!")
+					break
+				
+				if not players_dead[i]:
+					winner = i
+					print("[GAME OVER] Survivor: Player ", winner)
 					break
 		else:
-			# _players_alive == 0 -> DRAW
 			print("[GAME OVER] No survivors - DRAW")
 		
 		print("[GAME OVER] Winner: Player ", winner if winner != -1 else "NONE")
 		
+		_game_over_sent = true  # Markiere als gesendet
+		
+		# Nur Host sendet Netzwerk-Message
 		if _is_host:
 			if _relay_client != null and is_instance_valid(_relay_client):
 				var message = Message.new()
@@ -287,13 +303,35 @@ func check_game_over():
 				message.content["winner"] = winner
 				_relay_client.send_data(message)
 		
+		# Host UND Client emittieren Signal (Client durch Message-Handler)
 		emit_signal("on_game_over", winner, player_scores)
 
 func check_collisions():
+	# NUR HOST macht Kollisionserkennung!
+	if not _is_host:
+		return
+	
 	var tiles = get_tree().get_nodes_in_group("tiles")
 	var tile_positions = {}
 	var mark_for_deletion = []
 	
+	# NEUE: Prüfe erst Wandkollisionen
+	for tile in tiles:
+		tile = tile as Tile
+		if tile.is_disabled:
+			continue
+		
+		# Nur Snake-Köpfe prüfen
+		if tile.is_head:
+			var pos = Vector2i(tile.tile_x, tile.tile_y)
+			
+			# Prüfe Kollision mit TileMap-Wänden
+			if tilemap and is_wall_at(pos):
+				print("[WALL COLLISION] Player ", tile.player, " hit wall at ", pos)
+				mark_for_deletion.append(tile)
+				continue  # Überspringe weitere Checks für diesen Kopf
+	
+	# Dann Snake-zu-Snake und Food-Kollisionen
 	for tile in tiles:
 		tile = tile as Tile
 		if tile.is_disabled:
@@ -301,21 +339,14 @@ func check_collisions():
 		
 		var pos = Vector2(tile.tile_x, tile.tile_y)
 		
-		if tilemap and is_wall_at(pos):
-			if tile.is_head:
-				print("[WALL COLLISION] Player ", tile.player, " hit wall at ", pos)
-				mark_for_deletion.append(tile)
-				continue
-		
 		if not tile_positions.has(pos):
 			tile_positions[pos] = tile
 		else:
-			# Collision detected!
 			var tile1 = tile
 			var tile2 = tile_positions[pos]
 			
 			# FOOD COLLISION
-			if tile1.is_food or tile2.is_food:
+			if tile1.is_food:
 				var head_tile = null
 				var food_tile = null
 				
@@ -329,20 +360,15 @@ func check_collisions():
 				if head_tile != null and food_tile != null:
 					print("[FOOD] Player ", head_tile.player, " ate food at ", pos)
 					
-					# Player wächst
 					players[head_tile.player].grow()
 					player_scores[head_tile.player] += 1
 					
-					# Nur Host bewegt Food
-					if _is_host:
-						var free_pos = rand_free_pos()
-						food_tile.teleport_to(free_pos.x, free_pos.y)
-						print("[FOOD] Host moved food to ", free_pos)
-					# Client wartet auf Sync
-			
-			# SNAKE COLLISION (Tod)
+					var free_pos = rand_free_pos()
+					food_tile.teleport_to(free_pos.x, free_pos.y)
+					print("[FOOD] Host moved food to ", free_pos)
+
+			# SNAKE COLLISION (Snake-zu-Snake)
 			else:
-				# Beide Tiles sind Snake-Teile
 				if tile1.is_head:
 					mark_for_deletion.append(tile1)
 					print("[COLLISION] Player ", tile1.player, " head collision!")
@@ -350,18 +376,26 @@ func check_collisions():
 					mark_for_deletion.append(tile2)
 					print("[COLLISION] Player ", tile2.player, " head collision!")
 	
-	# NUR bei echten Toden Players killen
+	# Kill players
 	if mark_for_deletion.size() > 0:
 		print("[DEATH] ", mark_for_deletion.size(), " snake(s) died")
-		var alive_players = get_tree().get_nodes_in_group("players")
+		
 		for tile in mark_for_deletion:
-			for player in alive_players:
-				if player.player == tile.player:
-					if player.player == _player_number:
-						_player_is_dead = true
-					player.kill()
-					_players_alive -= 1
-					print("[DEATH] Player ", player.player, " killed. Alive: ", _players_alive)
+			var dead_player_idx = tile.player
+			
+			if dead_player_idx < 0 or dead_player_idx >= players_dead.size():
+				print("[ERROR] Invalid player index: ", dead_player_idx)
+				continue
+			
+			# Markiere als tot
+			players_dead[dead_player_idx] = true
+			_players_alive -= 1
+			
+			print("[DEATH] Player ", dead_player_idx, " marked as dead. Alive: ", _players_alive)
+			
+			# Kill
+			if dead_player_idx < players.size() and players[dead_player_idx] != null and is_instance_valid(players[dead_player_idx]):
+				players[dead_player_idx].kill()
 
 func is_wall_at(pos: Vector2i) -> bool:
 	if not tilemap:

@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dnpdjj1gy5lm4" path="res://Client/Game/Game.gd" id="1"]
 [ext_resource type="Script" uid="uid://c1jxw0hk1xfo6" path="res://Client/Game/PlayerInput.gd" id="2"]
 [ext_resource type="Script" uid="uid://bevfrm7jbdnfd" path="res://Client/Game/Player.gd" id="3"]
-[ext_resource type="PackedScene" uid="uid://cvxx7vvnoo7sh" path="res://Client/Game/SpawnPoint.tscn" id="3_8tl4o"]
+[ext_resource type="PackedScene" path="res://Client/Game/SpawnPoint.tscn" id="3_8tl4o"]
 [ext_resource type="TileSet" uid="uid://wcaqxbkaroar" path="res://Client/Assets/Tiles/TileSet-BlueBricks.tres" id="4_2j7je"]
 [ext_resource type="Script" uid="uid://dubryb1qg4i50" path="res://Client/Game/Camera.gd" id="5_6j0wy"]
 [ext_resource type="TileSet" uid="uid://dfnwlayaq4on4" path="res://Client/Assets/Tiles/TileSet-Floor.tres" id="6_plr42"]
