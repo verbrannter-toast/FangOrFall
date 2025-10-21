@@ -1,6 +1,6 @@
-[gd_scene load_steps=9 format=3 uid="uid://cg3utd5ito8t3"]
+[gd_scene load_steps=9 format=3 uid="uid://cssx4wgc5nvcf"]
 
-[ext_resource type="Script" path="res://Client/Game/GameOver.gd" id="1_433oy"]
+[ext_resource type="Script" uid="uid://dyi2jv3kxkuy8" path="res://Client/Game/GameOver.gd" id="1_433oy"]
 [ext_resource type="FontFile" uid="uid://1ltenkggr2qn" path="res://Client/Assets/Cave-Story.ttf" id="1_pb2r8"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_433oy"]

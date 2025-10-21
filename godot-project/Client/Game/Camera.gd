@@ -5,15 +5,38 @@ var _local_player_index: int = -1
 
 @export var follow_speed: float = 8.0
 @export var zoom_level: float = 1.0
+@export var use_map_limits: bool = true
 
 func _ready():
 	_game_node = get_parent()
 	anchor_mode = Camera2D.ANCHOR_MODE_DRAG_CENTER
 	
-	# Setze Zoom
+	# set zoom
 	zoom = Vector2(zoom_level, zoom_level)
 	
-	print("[CAMERA] Initialized with zoom: ", zoom)
+	# setup camera boundaries
+	if use_map_limits:
+		_setup_camera_limits()
+	
+	print("[CAMERA] Initialized")
+
+func _setup_camera_limits():
+	if not _game_node or not _game_node.tilemap:
+		return
+	
+	var tilemap = _game_node.tilemap
+	var used_rect = tilemap.get_used_rect()
+	var tile_size = _game_node.tile_size
+	
+	# Berechne Grenzen in Pixel
+	var margin = get_viewport_rect().size / 2  # Halbe Bildschirmgröße als Margin
+	
+	limit_left = int(used_rect.position.x * tile_size - margin.x)
+	limit_top = int(used_rect.position.y * tile_size - margin.y)
+	limit_right = int(used_rect.end.x * tile_size + margin.x)
+	limit_bottom = int(used_rect.end.y * tile_size + margin.y)
+	
+	print("[CAMERA] Limits set: ", limit_left, ",", limit_top, " to ", limit_right, ",", limit_bottom)
 
 func setup(player_index: int):
 	_local_player_index = player_index
