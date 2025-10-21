@@ -1,7 +1,8 @@
+Camera2D
+TileMap
 Label
 Control
 HBoxContainer
 VBoxContainer
 CenterContainer
 ColorRect
-Camera2D

@@ -1,5 +1,5 @@
 res://default_env.tres
-res://Client/Client.tscn
-res://Client/Client.gd
-res://Client/Game/Game.gd
 res://Client/Game/Game.tscn
+res://Client/Assets/Tiles/TileSet-BlueBricks.tres
+res://Client/Assets/Tiles/TileSet-Floor.tres
+res://Client/Game/Game.gd

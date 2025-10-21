@@ -9,13 +9,13 @@ func _input(event):
 	
 	if (event is InputEventKey and event.is_pressed()):
 		var new_direction = -1
-		if event.keycode == KEY_UP:
+		if event.keycode == KEY_UP or event.keycode == KEY_W:
 			new_direction = 0
-		if event.keycode == KEY_RIGHT:
+		if event.keycode == KEY_RIGHT or event.keycode == KEY_D:
 			new_direction = 1
-		if event.keycode == KEY_DOWN:
+		if event.keycode == KEY_DOWN or event.keycode == KEY_S:
 			new_direction = 2
-		if event.keycode == KEY_LEFT:
+		if event.keycode == KEY_LEFT or event.keycode == KEY_A:
 			new_direction = 3
 		if new_direction != -1:
 			if is_turn(player.current_direction, new_direction):

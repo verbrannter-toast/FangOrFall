@@ -119,7 +119,7 @@ func process_match_start():
 	
 	var is_host = my_player_number == 0
 	if is_host:
-		print("→ I am HOST - sending seed")
+		print("I am HOST - sending seed")
 		await get_tree().create_timer(0.1).timeout
 		
 		var msg = Message.new()

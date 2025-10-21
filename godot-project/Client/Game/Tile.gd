@@ -88,14 +88,17 @@ func refresh_texture():
 		modulate = Color.WHITE
 
 func teleport_to(x, y):
-	position = Vector2(x * tile_size, y * tile_size)
 	tile_x = x
 	tile_y = y
+	
+	position = Vector2(x * tile_size, y * tile_size)
 
 func move_to(x, y):
-	var tween = create_tween()
-	tween.tween_property(self, "position", Vector2(x * tile_size, y * tile_size), 0.2)
-	tween.set_trans(Tween.TRANS_CUBIC)
-	
 	tile_x = x
 	tile_y = y
+	
+	var target_pos = Vector2(x * tile_size, y * tile_size)
+	
+	var tween = create_tween()
+	tween.tween_property(self, "position", target_pos, 0.2)
+	tween.set_trans(Tween.TRANS_CUBIC)

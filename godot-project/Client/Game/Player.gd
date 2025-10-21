@@ -3,7 +3,6 @@ extends Control
 const DIRECTIONS = [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]
 
 @export var player: int
-@export var initial_tile: Vector2
 
 var TileScene = preload("res://Client/Game/Tile.tscn")
 var body = []
@@ -11,13 +10,24 @@ var current_direction: int = 1
 
 var _tile_size: int
 var _player: int  # Die echte Player-Nummer (0 oder 1)
+var _spawn_position: Vector2i
 
 func _ready():
 	add_to_group("players")
 
 func setup(tile_size: int, player_num: int, _sprite_idx: int):
 	_tile_size = tile_size
-	_player = player_num  # echte Player-Nummer
+	_player = player_num
+	
+	# find SpawnPoint based on child node
+	var spawn_point = _find_spawn_point()
+	if spawn_point:
+		_spawn_position = spawn_point.get_grid_position(tile_size)
+		print("[PLAYER ", _player, "] Spawning at: ", _spawn_position, " (from SpawnPoint)")
+	else:
+		# Fallback: Default-Positionen
+		_spawn_position = Vector2i(5, 5) if player_num == 0 else Vector2i(25, 25)
+		print("[PLAYER ", _player, "] WARNING: No SpawnPoint found! Using fallback: ", _spawn_position)
 	
 	# Startrichtung basierend auf Spieler
 	if player_num == 0:
@@ -30,14 +40,14 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 	head.is_active = true
 	head.is_head = true
 	head.direction = current_direction
-	head.teleport_to(initial_tile.x, initial_tile.y)
+	head.teleport_to(_spawn_position.x, _spawn_position.y)
 	
 	# 2 Startkörper-Segmente
 	for i in range(2):
 		var segment = create_body()
 		segment.is_active = true
 		var offset = DIRECTIONS[current_direction] * (i + 1) * -1
-		segment.teleport_to(initial_tile.x + offset.x, initial_tile.y + offset.y)
+		segment.teleport_to(_spawn_position.x + offset.x, _spawn_position.y + offset.y)
 		segment.direction = current_direction
 		segment.prev_direction = current_direction
 		segment.next_direction = current_direction
@@ -49,28 +59,33 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 	for tile in body:
 		tile.refresh_texture()
 
+func _find_spawn_point() -> SpawnPoint:
+	# Suche nach SpawnPoint als Child
+	for child in get_children():
+		if child is SpawnPoint:
+			return child
+	return null
+
 func create_body() -> Tile:
 	var tile = TileScene.instantiate()
 	
-	tile.anchor_left = 0
-	tile.anchor_top = 0
-	tile.anchor_right = 0
-	tile.anchor_bottom = 0
+	# set size before adding to scene
+	tile.tile_size = _tile_size
 	tile.custom_minimum_size = Vector2.ONE * _tile_size
 	tile.size = Vector2.ONE * _tile_size
-	tile.tile_size = _tile_size
 	tile.player = _player
 	
-	# Standardmäßig ist es Körper (nicht Kopf, nicht Schwanz)
+	# set flags
 	tile.is_head = false
 	tile.is_tail = false
 	tile.is_active = false
 	
-	# Erst DANN zur Scene hinzufügen
+	# add to scene
 	add_child(tile)
 	body.append(tile)
 	
-	# Texture refresh nach add_child
+	print("[PLAYER ", _player, "] Created tile with size: ", tile.size, " tile_size: ", _tile_size)
+	
 	tile.refresh_texture()
 	
 	return tile
