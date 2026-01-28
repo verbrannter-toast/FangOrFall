@@ -28,17 +28,19 @@ func _ready():
 	print("Match size: ", match_size, " players")
 	print("========================")
 	
-	# Listen on all interfaces (wichtig für Railway)
-	var err = _server.listen(PORT, "*")
+	# Bind ONLY to localhost (we will be using a reverse proxy for traffic management)
+	var err = _server.listen(PORT, "127.0.0.1")
 	if err != OK:
 		print("ERROR: Unable to start server: ", err)
 		set_process(false)
 		return
 	
 	print("Server listening on port ", PORT)
-	print("Connect clients to: ", _get_local_ip(), ":", PORT)
+	print("Local endpoint: 127.0.0.1:", PORT)
 
 	_logger_coroutine()
+	_heartbeat_coroutine()
+
 
 func _get_local_ip() -> String:
 	var ip_list = IP.get_local_addresses()
@@ -56,6 +58,15 @@ func _logger_coroutine():
 		print("Match queue: ", _match_queue)
 		print("Active matches: ", _count_active_matches())
 		print("--------------------\n")
+
+func _heartbeat_coroutine():
+	while true:
+		await get_tree().create_timer(25.0).timeout
+		for id in _peers.keys():
+			var msg = Message.new()
+			msg.is_echo = true
+			msg.content = "ping"
+			_send_to_peer(id, msg)
 
 func _count_active_matches() -> int:
 	var in_match = 0
@@ -81,7 +92,7 @@ func _process(delta):
 		_peers[id] = {
 			"ws": ws_peer,
 			"tcp": peer,
-			"ready": false  # NEU: Track ob WebSocket fertig ist
+			"ready": false
 		}
 		
 		print("→ Client ", id, " connecting...")
@@ -101,15 +112,19 @@ func _process(delta):
 				# Still connecting, wait
 				pass
 			WebSocketPeer.STATE_OPEN:
-				# NEU: Erst beim ersten OPEN registrieren
 				if not peer_data["ready"]:
 					peer_data["ready"] = true
 					_connected(id)
 				
 				# Process messages
-				while ws_peer.get_available_packet_count() > 0:
+				var max_packets = 50
+				var processed = 0
+
+				while ws_peer.get_available_packet_count() > 0 and processed < max_packets:
 					var packet = ws_peer.get_packet()
 					_on_data(id, packet)
+					processed += 1
+
 			WebSocketPeer.STATE_CLOSING:
 				pass
 			WebSocketPeer.STATE_CLOSED:
