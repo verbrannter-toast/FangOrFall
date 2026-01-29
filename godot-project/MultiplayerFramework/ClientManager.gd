@@ -2,7 +2,7 @@ extends Node
 
 class_name ClientManager
 
-@export var websocket_url: String = "fangorfall-production.up.railway.app"
+@export var websocket_url: String = "fangorfall.duckdns.org"
 @export var port: int = 443
 
 var _match = []

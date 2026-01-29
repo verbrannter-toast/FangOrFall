@@ -2,4 +2,5 @@ res://default_env.tres
 res://Client/Game/Game.tscn
 res://Client/Assets/Tiles/TileSet-BlueBricks.tres
 res://Client/Assets/Tiles/TileSet-Floor.tres
-res://Client/Game/Game.gd
+res://MultiplayerFramework/ClientManager.gd
+res://MultiplayerFramework/MatchmakerServer.gd
