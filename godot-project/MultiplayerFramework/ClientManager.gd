@@ -62,10 +62,10 @@ func connect_to_server():
 	
 	# Build WebSocket URI
 	if is_secure:
-		# ngrok or production - use WSS on port 443 (default, no need to specify)
+		# use WSS on port 443 (default, no need to specify)
 		uri = "wss://" + clean_url
 	else:
-		# Local development - use WS with specified port
+		# use WS with specified port
 		uri = "ws://" + clean_url + ":" + str(port)
 	
 	print("Connecting to: ", uri)
@@ -98,11 +98,10 @@ func disconnect_from_server():
 	set_process(false)
 
 func _process(_delta):
-	# Guard: Früher Exit wenn nicht verbunden oder Client null
 	if not _is_connected and _client == null:
 		return
 	
-	# Try-Catch Pattern mit frühen Returns
+	# Try-Catch Pattern with early returns
 	if _client == null:
 		_is_connected = false
 		set_process(false)
@@ -114,7 +113,7 @@ func _process(_delta):
 		set_process(false)
 		return
 	
-	# Ab hier ist _client garantiert valid
+	# _client is guaranteed to be valid here
 	_client.poll()
 	
 	var state = _client.get_ready_state()
@@ -131,9 +130,9 @@ func _process(_delta):
 			
 			# Connection established
 			if not _initialised:
-				print("✓ WebSocket connected!")
+				print("  WebSocket connected!")
 			
-			# Process packets mit extra Safety
+			# Process packets with extra safety
 			_process_packets()
 			
 		WebSocketPeer.STATE_CLOSING:
@@ -151,21 +150,20 @@ func _process(_delta):
 			set_process(false)
 
 func _process_packets():
-	# Extra sichere Packet-Verarbeitung
 	if _client == null or not is_instance_valid(_client):
 		return
 	
-	# Prüfe State nochmal
+	# check state again
 	if _client.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
 	
 	var packet_count = _client.get_available_packet_count()
 	
-	# Limit: Max 100 packets pro Frame (verhindert Freeze)
+	# max 100 packets per frame to prevent freeze
 	var max_packets = min(packet_count, 100)
 	
 	for i in range(max_packets):
-		# Check vor JEDEM Packet
+		# check before every packet
 		if _client == null or not is_instance_valid(_client):
 			print("WARNING: Client became null during packet processing")
 			break
@@ -188,7 +186,7 @@ func _on_data(data: PackedByteArray):
 	if message.server_login:
 		_id = message.content
 		_initialised = true
-		print("✓ Logged in with ID: ", _id)
+		print("  Logged in with ID: ", _id)
 		emit_signal("on_message", message)
 		return
 	
@@ -205,7 +203,7 @@ func _on_data(data: PackedByteArray):
 			print("ERROR: My ID ", _id, " not in match: ", _match)
 			return
 		
-		print("✓ Match started!")
+		print("  Match started!")
 		print("  My ID: ", _id)
 		print("  My Player Number: ", _player_number)
 		print("  All Players: ", _match)
