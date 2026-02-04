@@ -9,7 +9,7 @@ var body = []
 var current_direction: int = 1
 
 var _tile_size: int
-var _player: int  # Die echte Player-Nummer (0 oder 1)
+var _player: int  # real player number (0 or 1)
 var _spawn_position: Vector2i
 
 func _ready():
@@ -25,24 +25,24 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 		_spawn_position = spawn_point.get_grid_position(tile_size)
 		print("[PLAYER ", _player, "] Spawning at: ", _spawn_position, " (from SpawnPoint)")
 	else:
-		# Fallback: Default-Positionen
+		# Fallback: default positions
 		_spawn_position = Vector2i(5, 5) if player_num == 0 else Vector2i(25, 25)
 		print("[PLAYER ", _player, "] WARNING: No SpawnPoint found! Using fallback: ", _spawn_position)
 	
-	# Startrichtung basierend auf Spieler
+	# start direction based on player
 	if player_num == 0:
 		current_direction = 1  # RIGHT
 	else:
 		current_direction = 3  # LEFT
 	
-	# Kopf
+	# head
 	var head = create_body()
 	head.is_active = true
 	head.is_head = true
 	head.direction = current_direction
 	head.teleport_to(_spawn_position.x, _spawn_position.y)
 	
-	# 2 Startkörper-Segmente
+	# 2 starting body segments
 	for i in range(2):
 		var segment = create_body()
 		segment.is_active = true
@@ -52,15 +52,15 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 		segment.prev_direction = current_direction
 		segment.next_direction = current_direction
 	
-	# Letztes Segment ist Schwanz
+	# last segment is tail
 	body[-1].is_tail = true
 	
-	# Refresh alle Texturen
+	# refresh all textures
 	for tile in body:
 		tile.refresh_texture()
 
 func _find_spawn_point() -> SpawnPoint:
-	# Suche nach SpawnPoint als Child
+	# search for spawn point as child
 	for child in get_children():
 		if child is SpawnPoint:
 			return child
@@ -97,7 +97,7 @@ func move_to_direction():
 	var head: Tile = body[0]
 	var movement = DIRECTIONS[current_direction]
 	
-	# Speichere alte Positionen und Richtungen
+	# save old positions and directions
 	var positions = []
 	var directions = []
 	
@@ -106,17 +106,17 @@ func move_to_direction():
 		positions.append(Vector2(body[i].tile_x, body[i].tile_y))
 		directions.append(body[i].direction)
 	
-	# Bewege Kopf
+	# move head
 	head.direction = current_direction
 	head.move_to(head.tile_x + movement.x, head.tile_y + movement.y)
 	
 	
-	# Bewege Rest der Schlange
+	# move rest of snake
 	for i in range(1, body.size()):
 		if body[i].is_active:
 			body[i].move_to(positions[i-1].x, positions[i-1].y)
 			
-			# Update Richtungen für Körpersegmente
+			# update direction of all segments
 			body[i].prev_direction = directions[i-1]
 			if i < body.size() - 1:
 				body[i].next_direction = get_direction_to(positions[i], positions[i+1])
@@ -128,7 +128,7 @@ func move_to_direction():
 			body[i].is_active = true
 			body[i].teleport_to(positions[i-1].x, positions[i-1].y)
 	
-	# Refresh Texturen
+	# refresh textures
 	for tile in body:
 		tile.refresh_texture()
 
@@ -140,14 +140,14 @@ func get_direction_to(from: Vector2, to: Vector2) -> int:
 		return 1 if diff.x > 0 else 3
 
 func grow():
-	# Erstelle neues Segment
+	# create new segment
 	var new_segment = create_body()
 	
 	if body.size() > 1:
 		var old_tail_idx = body.size() - 2
 		var old_tail = body[old_tail_idx]
 		
-		# Flags explizit setzen
+		# place flags explicitly
 		old_tail.is_tail = false
 		old_tail.is_head = false
 		
@@ -155,7 +155,7 @@ func grow():
 		new_segment.is_head = false
 		new_segment.is_active = false
 		
-		# Position vom vorletzten Segment
+		# position of next to last segment
 		var ref_tile = body[old_tail_idx]
 		new_segment.teleport_to(ref_tile.tile_x, ref_tile.tile_y)
 		new_segment.prev_direction = ref_tile.direction

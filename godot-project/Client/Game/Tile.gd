@@ -4,7 +4,7 @@ class_name Tile
 
 @export var is_disabled: bool = false
 
-# Separate Texturen für Kopf, Körper und Schwanz
+# seperate textures for head, body and tail
 @export var head_textures: Array[Texture2D] = []  # [Player0, Player1, Player2, Player3]
 @export var body_textures: Array[Texture2D] = []  # [Player0, Player1, Player2, Player3]
 @export var tail_textures: Array[Texture2D] = []  # [Player0, Player1, Player2, Player3]
@@ -18,7 +18,7 @@ var player: int = -1
 var is_food: bool = false
 var is_active: bool = false
 
-# Richtungen für zukünftige Rotation (optional)
+# directions for future rotation (optional)
 var direction: int = 1
 var next_direction: int = 1
 var prev_direction: int = 1
@@ -59,7 +59,7 @@ func refresh_texture():
 				texture = body_textures[player]
 			modulate = Color(1.3, 1.3, 1.3, 1.0)
 		
-		# ROTATION für Kopf
+		# rotation for head
 		match direction:
 			0: rotation = 0
 			1: rotation = PI / 2
@@ -74,14 +74,14 @@ func refresh_texture():
 				texture = body_textures[player]
 			modulate = Color(0.7, 0.7, 0.7, 1.0)
 		
-		# ROTATION für Schwanz
+		# rotation for tail
 		match prev_direction:
 			0: rotation = PI
 			1: rotation = PI * 3 / 2
 			2: rotation = 0
 			3: rotation = PI / 2
 	else:
-		# Normaler Körper
+		# rotation for body
 		if body_textures.size() > player:
 			rotation = 0
 			texture = body_textures[player]

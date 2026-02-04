@@ -28,8 +28,8 @@ func _setup_camera_limits():
 	var used_rect = tilemap.get_used_rect()
 	var tile_size = _game_node.tile_size
 	
-	# Berechne Grenzen in Pixel
-	var margin = get_viewport_rect().size / 2  # Halbe Bildschirmgröße als Margin
+	# calculate margins in pixels
+	var margin = get_viewport_rect().size / 2  # half the screen size as margin
 	
 	limit_left = int(used_rect.position.x * tile_size - margin.x)
 	limit_top = int(used_rect.position.y * tile_size - margin.y)
@@ -42,7 +42,7 @@ func setup(player_index: int):
 	_local_player_index = player_index
 	print("[CAMERA] Following player ", player_index)
 	
-	# Snap to player initial position
+	# snap to player initial position
 	await get_tree().process_frame
 	_snap_to_player()
 

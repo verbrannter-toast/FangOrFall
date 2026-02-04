@@ -37,30 +37,30 @@ func send_data(message: Message):
 		emit_signal("on_message", message)
 
 func connect_to_server():
-	# Clean the URL
+	# clean the URL
 	var clean_url = websocket_url.strip_edges()
 	clean_url = clean_url.replace("https://", "")
 	clean_url = clean_url.replace("http://", "")
 	clean_url = clean_url.replace("ws://", "")
 	clean_url = clean_url.replace("wss://", "")
 	
-	# Remove port from URL if present
+	# remove port from URL if present
 	if ":" in clean_url:
 		var parts = clean_url.split(":")
 		clean_url = parts[0]
-		# Optionally extract port from URL
+		# optionally extract port from URL
 		if parts.size() > 1:
 			var url_port = parts[1].to_int()
 			if url_port > 0:
 				port = url_port
 	
-	# Remove trailing slash
+	# remove trailing slash
 	clean_url = clean_url.trim_suffix("/")
 	
-	# Determine if this is a secure connection (ngrok, production)
+	# determine if this is a secure connection
 	var is_secure = not (clean_url == "localhost" or clean_url.begins_with("127.0.0.1") or clean_url.begins_with("192.168.") or clean_url.begins_with("10."))
 	
-	# Build WebSocket URI
+	# build WebSocket URI
 	if is_secure:
 		# use WSS on port 443 (default, no need to specify)
 		uri = "wss://" + clean_url
@@ -120,23 +120,23 @@ func _process(_delta):
 	
 	match state:
 		WebSocketPeer.STATE_CONNECTING:
-			# Still connecting
+			# still connecting
 			pass
 			
 		WebSocketPeer.STATE_OPEN:
-			# Mark as connected
+			# mark as connected
 			if not _is_connected:
 				_is_connected = true
 			
-			# Connection established
+			# connection established
 			if not _initialised:
 				print("  WebSocket connected!")
 			
-			# Process packets with extra safety
+			# process packets with extra safety
 			_process_packets()
 			
 		WebSocketPeer.STATE_CLOSING:
-			# Connection closing
+			# connection closing
 			_is_connected = false
 			
 		WebSocketPeer.STATE_CLOSED:
@@ -182,7 +182,7 @@ func _on_data(data: PackedByteArray):
 	var message = Message.new()
 	message.from_raw(data)
 	
-	# SERVER LOGIN - Receive our ID
+	# SERVER LOGIN - Receive ID
 	if message.server_login:
 		_id = message.content
 		_initialised = true
@@ -208,7 +208,7 @@ func _on_data(data: PackedByteArray):
 		print("  My Player Number: ", _player_number)
 		print("  All Players: ", _match)
 		
-		# Mark as ready
+		# mark as ready
 		players_ready = true
 		emit_signal("on_players_ready")
 		emit_signal("on_message", message)

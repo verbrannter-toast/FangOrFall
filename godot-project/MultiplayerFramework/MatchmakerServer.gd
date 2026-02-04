@@ -28,7 +28,7 @@ func _ready():
 	print("Match size: ", match_size, " players")
 	print("========================")
 	
-	# Bind ONLY to localhost (we will be using a reverse proxy for traffic management)
+	# Bind ONLY to localhost
 	var err = _server.listen(PORT, "127.0.0.1")
 	if err != OK:
 		print("ERROR: Unable to start server: ", err)
@@ -76,7 +76,7 @@ func _count_active_matches() -> int:
 	return in_match / match_size if match_size > 0 else 0
 
 func _process(delta):
-	# Accept new connections
+	# accept new connections
 	if _server.is_connection_available():
 		var peer = _server.take_connection()
 		var ws_peer = WebSocketPeer.new()
@@ -97,7 +97,7 @@ func _process(delta):
 		
 		print("→ Client ", id, " connecting...")
 	
-	# Poll existing connections
+	# poll existing connections
 	var to_remove = []
 	for id in _peers.keys():
 		var peer_data = _peers[id]
@@ -109,14 +109,14 @@ func _process(delta):
 		
 		match state:
 			WebSocketPeer.STATE_CONNECTING:
-				# Still connecting, wait
+				# still connecting, wait
 				pass
 			WebSocketPeer.STATE_OPEN:
 				if not peer_data["ready"]:
 					peer_data["ready"] = true
 					_connected(id)
 				
-				# Process messages
+				# process messages
 				var max_packets = 50
 				var processed = 0
 
@@ -131,16 +131,16 @@ func _process(delta):
 				_disconnected(id)
 				to_remove.append(id)
 	
-	# Remove closed connections
+	# remove closed connections
 	for id in to_remove:
 		_peers.erase(id)
 	
-	# Check for match creation
+	# check for match creation
 	if _match_queue.size() >= match_size:
 		create_new_match()
 
 func _connected(id):
-	print("✓ Client ", id, " connected (WebSocket ready)")
+	print("  Client ", id, " connected (WebSocket ready)")
 	_connected_players[id] = []
 	_match_queue.append(id)
 	
@@ -150,12 +150,12 @@ func _connected(id):
 	
 	_send_to_peer(id, message)
 	
-	print("  ✓ Sent login confirmation to client ", id)
+	print("  Sent login confirmation to client ", id)
 	print("  Queue status: ", _match_queue.size(), "/", match_size, " players")
 	
 	emit_signal("client_connected", id)
 	
-	# Log to parent if it exists
+	# log to parent if it exists
 	var parent = get_parent()
 	if parent and parent.has_method("add_log"):
 		parent.add_log("[color=green]Client " + str(id) + " connected[/color]")
@@ -163,7 +163,7 @@ func _connected(id):
 			parent.add_log("[color=gray]Waiting for " + str(match_size - _match_queue.size()) + " more player(s)...[/color]")
 
 func create_new_match():
-	print("\n★ Creating new match with ", match_size, " players")
+	print("\n Creating new match with ", match_size, " players")
 	
 	var new_match = []
 	for i in range(match_size):
@@ -171,7 +171,7 @@ func create_new_match():
 	
 	print("  Match players: ", new_match)
 	
-	# Send match start to all players
+	# send match start to all players
 	for i in range(match_size):
 		var player_id = _match_queue[0]
 		var message = Message.new()
@@ -179,23 +179,23 @@ func create_new_match():
 		message.content = new_match
 		
 		_send_to_peer(player_id, message)
-		print("  ✓ Sent match start to player ", player_id)
+		print("  Sent match start to player ", player_id)
 		
 		_match_queue.remove_at(0)
 	
-	# Update player groups
+	# update player groups
 	for i in range(new_match.size()):
 		_connected_players[new_match[i]] = new_match
 	
 	emit_signal("match_created", new_match)
 	
-	# Log to parent
+	# log to parent
 	var parent = get_parent()
 	if parent and parent.has_method("add_log"):
 		var players_str = ", ".join(Array(new_match).map(func(x): return str(x)))
-		parent.add_log("[color=cyan]★ Match created with players: " + players_str + "[/color]")
+		parent.add_log("[color=cyan]  Match created with players: " + players_str + "[/color]")
 	
-	print("  ✓ Match created successfully\n")
+	print("  Match created successfully\n")
 
 func remove_player_from_connections(id):
 	if _match_queue.has(id):
@@ -207,7 +207,7 @@ func remove_player_from_connections(id):
 		_connected_players.erase(id)
 
 func _disconnected(id):
-	print("← Client ", id, " disconnected")
+	print("<- Client ", id, " disconnected")
 	remove_player_from_connections(id)
 	emit_signal("client_disconnected", id)
 	
@@ -236,7 +236,7 @@ func _on_data(id, packet: PackedByteArray):
 	
 	# Only log important messages, not game ticks
 	if msg_type != "game input":
-		print("  ← Received ", msg_type, " from client ", id)
+		print("  <- Received ", msg_type, " from client ", id)
 	
 	emit_signal("message_received", id, msg_type)
 	
@@ -249,7 +249,7 @@ func _on_data(id, packet: PackedByteArray):
 					forwarded += 1
 		
 		if msg_type != "game input" and forwarded > 0:
-			print("  → Forwarded to ", forwarded, " player(s)")
+			print("  -> Forwarded to ", forwarded, " player(s)")
 
 # NEU: Sichere Send-Funktion
 func _send_to_peer(id: int, message: Message) -> bool:
