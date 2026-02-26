@@ -4,6 +4,12 @@ var _relay_client: ClientManager
 var _game_over_triggered: bool = false
 var _game
 
+# Ping tracking
+var _ping_send_time: float = 0.0
+var _ping_interval: float = 3.0
+var _ping_timer: float = 0.0
+var _last_ping_ms: int = -1
+
 func _ready():
 	_relay_client = $WebsocketClient
 	_relay_client.connect("on_message", _on_message)
@@ -13,6 +19,23 @@ func _ready():
 
 	$StartScreen.show()
 	$Lobby.hide()
+
+func _process(delta):
+	# Only ping while connected
+	if not _relay_client._is_connected:
+		return
+
+	_ping_timer += delta
+	if _ping_timer >= _ping_interval:
+		_ping_timer = 0.0
+		_send_ping()
+
+func _send_ping():
+	_ping_send_time = Time.get_ticks_msec()
+	var msg = Message.new()
+	msg.is_echo = true
+	msg.content = { "ping": true, "t": _ping_send_time }
+	_relay_client.send_data(msg)
 
 func _on_start_game():
 	print("=== START GAME PRESSED ===")
@@ -66,6 +89,13 @@ func _on_message(message: Message):
 		return
 
 	if message.content is Dictionary:
+		# Pong — calculate round-trip time
+		if message.content.has("ping"):
+			var rtt = Time.get_ticks_msec() - int(message.content.get("t", _ping_send_time))
+			_last_ping_ms = rtt
+			print("[PING] %d ms" % rtt)
+			return
+
 		# Server-authoritative tick — apply inputs and advance simulation
 		if message.content.has("server_tick"):
 			process_server_tick(message)
