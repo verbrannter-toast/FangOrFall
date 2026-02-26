@@ -1,13 +1,14 @@
 extends Node
 
-var is_host : bool
-var relay_client : ClientManager
+# is_host removed — both players send input to the server
+var relay_client: ClientManager
 var player
 
 func _input(event):
-	if (player == null): return
-	
-	if (event is InputEventKey and event.is_pressed()):
+	if player == null:
+		return
+
+	if event is InputEventKey and event.is_pressed():
 		var new_direction = -1
 		if event.keycode == KEY_UP or event.keycode == KEY_W:
 			new_direction = 0
@@ -19,23 +20,22 @@ func _input(event):
 			new_direction = 3
 		if new_direction != -1:
 			if is_turn(player.current_direction, new_direction):
-				print("[INPUT] 180 turn detected")
+				print("[INPUT] 180 turn detected — ignoring")
 				return
 		set_direction(new_direction)
 
-func set_direction(dir : int):
-	if is_host:
-		player.current_direction = dir
-	else:
-		var message = Message.new()
-		message.is_echo = false
-		message.content = {}
-		message.content["host_tick"] = false
-		message.content["directions"] = [Vector2(player.player, dir)]
-		relay_client.send_data(message)
+func set_direction(dir: int):
+	if dir == -1:
+		return
+
+	# Apply locally for responsive feel
+	player.current_direction = dir
+
+	# Send to server — server collects and broadcasts on next tick
+	var message = Message.new()
+	message.is_echo = false
+	message.content = { "player_input": dir }
+	relay_client.send_data(message)
 
 func is_turn(current_dir: int, new_dir: int) -> bool:
 	return (current_dir + 2) % 4 == new_dir
-	
-	
-	
