@@ -89,14 +89,14 @@ func _on_message(message: Message):
 		return
 
 	if message.content is Dictionary:
-		# Pong — calculate round-trip time
+		# calculate round-trip time
 		if message.content.has("ping"):
 			var rtt = Time.get_ticks_msec() - int(message.content.get("t", _ping_send_time))
 			_last_ping_ms = rtt
 			print("[PING] %d ms" % rtt)
 			return
 
-		# Server-authoritative tick — apply inputs and advance simulation
+		# Server-authoritative tick applies inputs and advances simulation
 		if message.content.has("server_tick"):
 			process_server_tick(message)
 			return
@@ -124,12 +124,12 @@ func process_server_tick(message: Message):
 		var pid = int(pid_str)
 		var dir = int(inputs[pid_str])
 		if dir == -1:
-			continue  # No input this tick — player keeps current direction
+			continue  # No input this tick, player keeps current direction
 		var player_number = _relay_client._match.find(pid)
 		if player_number != -1:
 			_game._set_direction(player_number, dir)
 
-	# Both clients run the same tick with the same inputs → fully deterministic
+	# Both clients run the same tick with the same inputs
 	_game.tick()
 
 func process_match_start():
@@ -156,7 +156,6 @@ func process_match_start():
 	print("  My ID: ", my_id)
 	print("  My Player Number: ", my_player_number)
 
-	# No host/client distinction anymore — every player just connects
 	_game.setup(my_player_number, _relay_client)
 
 func process_seed_message(message: Message):
