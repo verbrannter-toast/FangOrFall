@@ -60,3 +60,4 @@ stream = ExtResource("8_jupb3")
 
 [node name="EatApple" type="AudioStreamPlayer" parent="." unique_id=1912420483]
 stream = ExtResource("9_ohk6n")
+volume_db = -10.0

@@ -111,10 +111,11 @@ func check_game_over():
 
 		# Client.gd will show GameOver screen.
 		emit_signal("on_game_over", winner, player_scores)
+		$GameMusic.stop()
 
 func _process(delta):
 	if $GameMusic.playing == false:
-		if !check_game_over():
+		if !_game_over_sent:
 			$GameMusic.play()
 		else:
 			$GameMusic.stop()
