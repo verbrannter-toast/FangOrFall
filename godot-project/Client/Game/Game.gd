@@ -112,6 +112,15 @@ func check_game_over():
 		# Client.gd will show GameOver screen.
 		emit_signal("on_game_over", winner, player_scores)
 
+func _process(delta):
+	if $GameMusic.playing == false:
+		if !check_game_over():
+			$GameMusic.play()
+		else:
+			$GameMusic.stop()
+	pass
+	
+
 func check_collisions():
 	# All clients run identical deterministic simulation — no host guard needed
 	var tiles = get_tree().get_nodes_in_group("tiles")
@@ -157,6 +166,7 @@ func check_collisions():
 					food_tile = tile1
 
 				if head_tile != null and food_tile != null:
+					$EatApple.play()
 					print("[FOOD] Player ", head_tile.player, " ate food at ", pos)
 					players[head_tile.player].grow()
 					player_scores[head_tile.player] += 1

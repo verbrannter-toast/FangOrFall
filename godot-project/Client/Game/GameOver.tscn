@@ -1,7 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://cssx4wgc5nvcf"]
+[gd_scene format=3 uid="uid://cssx4wgc5nvcf"]
 
 [ext_resource type="Script" uid="uid://dyi2jv3kxkuy8" path="res://Client/Game/GameOver.gd" id="1_433oy"]
 [ext_resource type="FontFile" uid="uid://1ltenkggr2qn" path="res://Client/Assets/Cave-Story.ttf" id="1_pb2r8"]
+[ext_resource type="AudioStream" uid="uid://cde7kfdk5caow" path="res://Client/Sounds/GameOver.mp3" id="3_bh5m8"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_433oy"]
 font = ExtResource("1_pb2r8")
@@ -27,10 +28,10 @@ font_size = 30
 font = ExtResource("1_pb2r8")
 font_size = 30
 
-[node name="GameOver" type="CanvasLayer"]
+[node name="GameOver" type="CanvasLayer" unique_id=682676573]
 script = ExtResource("1_433oy")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=218520117]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -38,67 +39,70 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.8)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=260660163]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1222097808]
 layout_mode = 2
 alignment = 1
 
-[node name="GameOverLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+[node name="GameOverLabel" type="Label" parent="CenterContainer/VBoxContainer" unique_id=1655645171]
 layout_mode = 2
 text = "GAME OVER"
 label_settings = SubResource("LabelSettings_433oy")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Spacer" type="Control" parent="CenterContainer/VBoxContainer"]
+[node name="Spacer" type="Control" parent="CenterContainer/VBoxContainer" unique_id=298626336]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="WinnerLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+[node name="WinnerLabel" type="Label" parent="CenterContainer/VBoxContainer" unique_id=745824347]
 layout_mode = 2
 text = "PLACEHOLDER"
 label_settings = SubResource("LabelSettings_bh5m8")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Spacer2" type="Control" parent="CenterContainer/VBoxContainer"]
+[node name="Spacer2" type="Control" parent="CenterContainer/VBoxContainer" unique_id=624397681]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
-[node name="ScoreContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+[node name="ScoreContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer" unique_id=1351855031]
 layout_mode = 2
 alignment = 1
 
-[node name="Player1Score" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer"]
+[node name="Player1Score" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer" unique_id=389993471]
 layout_mode = 2
 text = "Player 1: X"
 label_settings = SubResource("LabelSettings_oug5j")
 horizontal_alignment = 1
 
-[node name="VSLabel" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer"]
+[node name="VSLabel" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer" unique_id=1959313533]
 layout_mode = 2
 text = " VS "
 label_settings = SubResource("LabelSettings_0h3qf")
 horizontal_alignment = 1
 
-[node name="Player2Score" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer"]
+[node name="Player2Score" type="Label" parent="CenterContainer/VBoxContainer/ScoreContainer" unique_id=1463246526]
 layout_mode = 2
 text = "Player 2: X"
 label_settings = SubResource("LabelSettings_t2n7i")
 horizontal_alignment = 1
 
-[node name="Spacer3" type="Control" parent="CenterContainer/VBoxContainer"]
+[node name="Spacer3" type="Control" parent="CenterContainer/VBoxContainer" unique_id=1339510197]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
-[node name="InfoLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+[node name="InfoLabel" type="Label" parent="CenterContainer/VBoxContainer" unique_id=153033016]
 layout_mode = 2
 text = "Returning to menu..."
 label_settings = SubResource("LabelSettings_8kd2w")
 horizontal_alignment = 1
+
+[node name="GameOverLoser" type="AudioStreamPlayer" parent="." unique_id=1204516141]
+stream = ExtResource("3_bh5m8")

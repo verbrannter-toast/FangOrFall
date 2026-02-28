@@ -7,6 +7,8 @@
 [ext_resource type="TileSet" uid="uid://wcaqxbkaroar" path="res://Client/Assets/Tiles/TileSet-BlueBricks.tres" id="4_2j7je"]
 [ext_resource type="Script" uid="uid://dubryb1qg4i50" path="res://Client/Game/Camera.gd" id="5_6j0wy"]
 [ext_resource type="TileSet" uid="uid://dfnwlayaq4on4" path="res://Client/Assets/Tiles/TileSet-Floor.tres" id="6_plr42"]
+[ext_resource type="AudioStream" uid="uid://1fls32aodn8h" path="res://Client/Sounds/Track.wav" id="8_jupb3"]
+[ext_resource type="AudioStream" uid="uid://d4m4rp7x4cidw" path="res://Client/Sounds/nahtt-eat-323883.mp3" id="9_ohk6n"]
 
 [node name="GridMap" type="Control" unique_id=1253301198]
 layout_mode = 3
@@ -52,3 +54,9 @@ layer_0/tile_data = PackedInt32Array(524296, 0, 0, 589833, 0, 0, 655370, 65536, 
 position = Vector2(296, 280)
 script = ExtResource("5_6j0wy")
 zoom_level = 2.0
+
+[node name="GameMusic" type="AudioStreamPlayer" parent="." unique_id=1995684860]
+stream = ExtResource("8_jupb3")
+
+[node name="EatApple" type="AudioStreamPlayer" parent="." unique_id=1912420483]
+stream = ExtResource("9_ohk6n")
