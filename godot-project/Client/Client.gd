@@ -119,18 +119,20 @@ func process_server_tick(message: Message):
 
 	var inputs = message.content.get("inputs", {})
 
-	# Apply each player's direction from the authoritative server snapshot
 	for pid_str in inputs.keys():
 		var pid = int(pid_str)
 		var dir = int(inputs[pid_str])
 		if dir == -1:
-			continue  # No input this tick, player keeps current direction
+			continue
 		var player_number = _relay_client._match.find(pid)
 		if player_number != -1:
 			_game._set_direction(player_number, dir)
 
-	# Both clients run the same tick with the same inputs
 	_game.tick()
+
+	var my_player = _game.players[_relay_client._player_number]
+	if my_player != null and is_instance_valid(my_player):
+		_game.get_node("PlayerInput").set_committed_direction(my_player.current_direction)
 
 func process_match_start():
 	print("=== STARTING GAME SETUP ===")
