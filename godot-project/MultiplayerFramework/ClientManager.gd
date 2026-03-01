@@ -124,15 +124,11 @@ func _process(_delta):
 			pass
 			
 		WebSocketPeer.STATE_OPEN:
-			# mark as connected
 			if not _is_connected:
 				_is_connected = true
-			
-			# connection established
 			if not _initialised:
 				print("  WebSocket connected!")
-			
-			# process packets with extra safety
+				_initialised = true
 			_process_packets()
 			
 		WebSocketPeer.STATE_CLOSING:

@@ -1,6 +1,6 @@
 extends Control
 
-@export var round_tick: float = 0.2  # Reference only — server drives the tick now
+@export var round_tick: float = 0.2 # only a target value
 @export var map_width: int = 30
 @export var map_height: int = 30
 
@@ -8,7 +8,6 @@ var TileScene = preload("res://Client/Game/Tile.tscn")
 
 var tile_size = 0
 
-# No more _is_host — every client is equal, server is authoritative
 var _relay_client: ClientManager
 var _player_number: int
 var _player_is_dead: bool
@@ -70,15 +69,10 @@ func setup(player_number: int, relay_client: ClientManager):
 
 	$PlayerInput.player = players[player_number]
 	$PlayerInput.relay_client = relay_client
-	# Note: PlayerInput no longer has is_host — removed
 
 func _set_direction(player_number: int, direction: int):
 	if players[player_number] != null:
 		players[player_number].current_direction = direction
-
-# _process does nothing — Client.gd calls tick() on every server_tick message
-func _process(_delta):
-	pass
 
 # Called by Client.gd on every server_tick broadcast
 func tick():
@@ -115,9 +109,18 @@ func check_game_over():
 		print("[GAME OVER] Winner: Player ", winner if winner != -1 else "NONE")
 		_game_over_sent = true
 
-		# Both clients reach game over deterministically — no network message needed.
-		# Emit locally; Client.gd will show the GameOver screen.
+		# Client.gd will show GameOver screen.
 		emit_signal("on_game_over", winner, player_scores)
+		$GameMusic.stop()
+
+func _process(delta):
+	if $GameMusic.playing == false:
+		if !_game_over_sent:
+			$GameMusic.play()
+		else:
+			$GameMusic.stop()
+	pass
+	
 
 func check_collisions():
 	# All clients run identical deterministic simulation — no host guard needed
@@ -164,6 +167,7 @@ func check_collisions():
 					food_tile = tile1
 
 				if head_tile != null and food_tile != null:
+					$EatApple.play()
 					print("[FOOD] Player ", head_tile.player, " ate food at ", pos)
 					players[head_tile.player].grow()
 					player_scores[head_tile.player] += 1
@@ -226,7 +230,8 @@ func rand_free_pos() -> Vector2:
 	var max_x = used_rect.end.x - 1
 	var max_y = used_rect.end.y - 1
 
-	var occupied = []
+	# Use Vector2i throughout so that occupied.has() comparisons work correctly
+	var occupied: Array[Vector2i] = []
 
 	for player in players:
 		if player == null or not is_instance_valid(player):
@@ -235,10 +240,10 @@ func rand_free_pos() -> Vector2:
 			continue
 		for tile in player.body:
 			if tile != null and is_instance_valid(tile):
-				occupied.append(Vector2(tile.tile_x, tile.tile_y))
+				occupied.append(Vector2i(tile.tile_x, tile.tile_y))
 
 	for food in foods:
-		occupied.append(Vector2(food.tile_x, food.tile_y))
+		occupied.append(Vector2i(food.tile_x, food.tile_y))
 
 	for x in range(min_x, max_x + 1):
 		for y in range(min_y, max_y + 1):
