@@ -120,7 +120,6 @@ func _process(delta):
 		else:
 			$GameMusic.stop()
 	pass
-	
 
 func check_collisions():
 	# All clients run identical deterministic simulation — no host guard needed
