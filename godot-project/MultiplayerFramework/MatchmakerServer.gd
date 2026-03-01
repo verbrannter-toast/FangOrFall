@@ -162,7 +162,7 @@ func create_new_match():
 
 	print("  Match players: ", new_match)
 
-	# Generate a shared seed on the server — single source of truth
+	# Generate a shared seed on the server
 	var shared_seed = randi()
 
 	# Send match_start to all players
@@ -223,8 +223,13 @@ func _tick_session(match_id: String, session: Dictionary):
 	for pid in session["players"]:
 		tick_msg.content["inputs"][str(pid)] = session["inputs"].get(pid, -1)
 
+	# Broadcast to all players
 	for pid in session["players"]:
 		_send_to_peer(pid, tick_msg)
+
+	# Reset inputs so stale values never carry into the next tick
+	for pid in session["players"]:
+		session["inputs"][pid] = -1
 
 func remove_player_from_connections(id):
 	if _match_queue.has(id):

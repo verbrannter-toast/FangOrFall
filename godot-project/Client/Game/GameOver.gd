@@ -26,6 +26,7 @@ func setup(winner_player: int, my_player_number: int, player_scores: Array):
 		winner_label.text = "YOU WIN!"
 		winner_label.add_theme_color_override("font_color", Color.GREEN)
 	else:
+		$GameOverLoser.play()
 		winner_label.text = "YOU LOSE!"
 		winner_label.add_theme_color_override("font_color", Color.RED)
 	
