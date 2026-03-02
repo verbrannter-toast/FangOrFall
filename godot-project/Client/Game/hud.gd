@@ -11,7 +11,7 @@ func setup(my_player: int, players: Array):
 func update(scores: Array):
 	for i in range(scores.size()):
 		if i == _my_player:
-			my_panel.text = "My Score: %d"%[scores[i]]
+			my_panel.text = " My Score: %d"%[scores[i]]
 		else:
-			opp_panel.text = "Opp Score: %d"%[scores[i]]
+			opp_panel.text = " Opp Score: %d"%[scores[i]]
 	

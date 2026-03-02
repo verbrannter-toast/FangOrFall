@@ -12,6 +12,12 @@
 [ext_resource type="Script" uid="uid://begaa6bkgfwy5" path="res://Client/Game/hud.gd" id="10_n8sgs"]
 [ext_resource type="FontFile" uid="uid://1ltenkggr2qn" path="res://Client/Assets/Cave-Story.ttf" id="11_w4wa0"]
 
+[sub_resource type="LabelSettings" id="LabelSettings_n8sgs"]
+font_size = 30
+
+[sub_resource type="LabelSettings" id="LabelSettings_w4wa0"]
+font_size = 30
+
 [node name="GridMap" type="Control" unique_id=1253301198]
 layout_mode = 3
 anchors_preset = 15
@@ -67,23 +73,25 @@ stream = ExtResource("9_ohk6n")
 script = ExtResource("10_n8sgs")
 
 [node name="MyPanel" type="PanelContainer" parent="HUD" unique_id=1242636225]
-offset_left = 1.0
-offset_top = 3.0
-offset_right = 55.0
-offset_bottom = 43.0
+offset_top = 4.0
+offset_right = 150.0
+offset_bottom = 30.0
 
 [node name="Label" type="Label" parent="HUD/MyPanel" unique_id=613183331]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("11_w4wa0")
-text = "My Score:"
+text = " My Score:"
+label_settings = SubResource("LabelSettings_n8sgs")
+vertical_alignment = 1
 
 [node name="OppPanel" type="PanelContainer" parent="HUD" unique_id=2065072465]
-offset_left = 1826.0
-offset_top = 5.0
-offset_right = 1918.0
-offset_bottom = 45.0
+offset_top = 33.0
+offset_right = 150.0
+offset_bottom = 59.0
 
 [node name="Label" type="Label" parent="HUD/OppPanel" unique_id=266970765]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("11_w4wa0")
-text = "Oponnent Score:"
+text = " Opp Score:"
+label_settings = SubResource("LabelSettings_w4wa0")
+vertical_alignment = 1
