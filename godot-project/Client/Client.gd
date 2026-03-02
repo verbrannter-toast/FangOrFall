@@ -99,6 +99,7 @@ func _on_message(message: Message):
 			var count = message.content["countdown"]
 			if count == 0:
 				_game.get_node("HUD").countdown("GO!")
+				_game.get_node("GameMusic").play()
 			else:
 				_game.get_node("HUD").countdown(str(count))
 			return

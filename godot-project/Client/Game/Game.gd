@@ -118,14 +118,9 @@ func check_game_over():
 		emit_signal("on_game_over", winner, player_scores)
 		$GameMusic.stop()
 
-func _process(delta):
-	if $GameMusic.playing == false:
-		if !_game_over_sent:
-			$GameMusic.play()
-		else:
-			$GameMusic.stop()
-	pass
-	
+func start_music():
+	if !$GameMusic.playing:
+		$GameMusic.play()
 
 func check_collisions():
 	# All clients run identical deterministic simulation — no host guard needed
