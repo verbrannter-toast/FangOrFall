@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://dyi2jv3kxkuy8" path="res://Client/Game/GameOver.gd" id="1_433oy"]
 [ext_resource type="FontFile" uid="uid://1ltenkggr2qn" path="res://Client/Assets/Cave-Story.ttf" id="1_pb2r8"]
-[ext_resource type="AudioStream" uid="uid://cmf753ddjcu0t" path="res://Client/Assets/Sounds/GameOverLoser.wav" id="3_oug5j"]
-[ext_resource type="AudioStream" uid="uid://cy7rm3ghkh0at" path="res://Client/Assets/Sounds/GameWinning.wav" id="4_oug5j"]
+[ext_resource type="AudioStream" uid="uid://b26jlaahgv2" path="res://Client/Assets/Sounds/GameOverLoser.wav" id="3_oug5j"]
+[ext_resource type="AudioStream" uid="uid://txe215iac8ai" path="res://Client/Assets/Sounds/GameWinning.wav" id="4_oug5j"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_433oy"]
 font = ExtResource("1_pb2r8")
