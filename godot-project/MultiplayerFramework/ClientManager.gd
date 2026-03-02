@@ -126,6 +126,9 @@ func _process(_delta):
 		WebSocketPeer.STATE_OPEN:
 			if not _is_connected:
 				_is_connected = true
+				# Disable Nagle's algorithm so input packets are sent immediately
+				# without this, TCP batches small packets causing 200ms+ delays
+				_client.set_no_delay(true)
 			if not _initialised:
 				print("  WebSocket connected!")
 				_initialised = true

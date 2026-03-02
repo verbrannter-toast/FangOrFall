@@ -12,6 +12,7 @@ var _next_id = 1
 # Server-side game sessions: match_id -> { players, inputs, tick_timer, seed }
 var _match_sessions: Dictionary = {}
 var _tick_rate: float = 0.2  # Must match round_tick in Game.gd
+var _creating_match: bool = false
 
 # Signals for UI updates
 signal client_connected(id: int)
@@ -78,6 +79,9 @@ func _process(delta):
 	# Accept new connections
 	if _server.is_connection_available():
 		var peer = _server.take_connection()
+		# Disable Nagle's algorithm — without this, small packets (inputs, ticks)
+		# get buffered by TCP for hundreds of ms before sending, causing desync
+		peer.set_no_delay(true)
 		var ws_peer = WebSocketPeer.new()
 		var err = ws_peer.accept_stream(peer)
 		if err != OK:
@@ -122,7 +126,7 @@ func _process(delta):
 		_peers.erase(id)
 
 	# Check for match creation
-	if _match_queue.size() >= match_size:
+	if _match_queue.size() >= match_size and not _creating_match:
 		create_new_match()
 
 	# Tick all active sessions
@@ -154,6 +158,7 @@ func _connected(id):
 			parent.add_log("[color=gray]Waiting for " + str(match_size - _match_queue.size()) + " more player(s)...[/color]")
 
 func create_new_match():
+	_creating_match = true
 	print("\n Creating new match with ", match_size, " players")
 
 	var new_match = []
@@ -226,6 +231,7 @@ func _start_countdown(match_id: String, players: Array, seconds: int):
 	
 	if _match_sessions.has(match_id):
 		_match_sessions[match_id]["started"] = true
+	_creating_match = false
 
 func _make_match_id(players: Array) -> String:
 	var sorted = players.duplicate()
@@ -235,6 +241,7 @@ func _make_match_id(players: Array) -> String:
 # Broadcast collected inputs to all players so each client runs the same tick
 func _tick_session(match_id: String, session: Dictionary):
 	if not session.get("started", false):
+		print("session not started")
 		return
 	
 	var tick_msg = Message.new()
