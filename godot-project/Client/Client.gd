@@ -87,23 +87,22 @@ func _on_message(message: Message):
 		return
 	if message.match_start:
 		return
-	
-	if message.content.has("countdown"):
-		var count = message.content["countdown"]
-		if count == 0:
-			_game.get_node("HUD").countdown("GO!")
-		else:
-			_game.get_node("HUD").countdown(count)
 
 	if message.content is Dictionary:
-		# calculate round-trip time
 		if message.content.has("ping"):
 			var rtt = Time.get_ticks_msec() - int(message.content.get("t", _ping_send_time))
 			_last_ping_ms = rtt
 			print("[PING] %d ms" % rtt)
 			return
 
-		# Server-authoritative tick applies inputs and advances simulation
+		if message.content.has("countdown"):
+			var count = message.content["countdown"]
+			if count == 0:
+				_game.get_node("HUD").countdown("GO!")
+			else:
+				_game.get_node("HUD").countdown(str(count))
+			return
+
 		if message.content.has("server_tick"):
 			process_server_tick(message)
 			return

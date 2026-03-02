@@ -214,13 +214,13 @@ func create_new_match():
 func _start_countdown(match_id: String, players: Array, seconds: int):
 	for i in range(seconds, 0, -1):
 		var msg = Message.new()
-		msg.content = {"countdown": i}
+		msg.content = {"countdown": str(i)}
 		for pid in players:
 			_send_to_peer(pid, msg)
 		await get_tree().create_timer(1.0).timeout
 	
 	var go_msg = Message.new()
-	go_msg.content = { "countdown": 0}
+	go_msg.content = {"countdown": 0}
 	for pid in players:
 		_send_to_peer(pid, go_msg)
 	
