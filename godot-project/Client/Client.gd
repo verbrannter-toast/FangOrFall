@@ -173,7 +173,10 @@ func process_seed_message(message: Message):
 		return
 
 	print("Received seed from server: ", message.content["seed"])
-	seed(message.content["seed"])
+	# Use the game's isolated RNG — do NOT call global seed() here,
+	# as Godot's global RNG is also touched by engine internals and will
+	# diverge between machines with different framerates or GPU drivers
+	_game.set_seed(message.content["seed"])
 
 	# All clients spawn food identically using the same server-provided seed
 	if _game.foods.size() == 0:
