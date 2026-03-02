@@ -69,6 +69,7 @@ func setup(player_number: int, relay_client: ClientManager):
 
 	$PlayerInput.player = players[player_number]
 	$PlayerInput.relay_client = relay_client
+	$HUD.setup(_player_number, players)
 
 func _set_direction(player_number: int, direction: int):
 	if players[player_number] != null:
@@ -85,6 +86,10 @@ func tick():
 	var alive_players = get_tree().get_nodes_in_group("players")
 	for player in alive_players:
 		player.tick()
+		
+	$HUD.update(
+	player_scores
+)
 
 func check_game_over():
 	if _game_over_sent:
@@ -120,6 +125,7 @@ func _process(delta):
 		else:
 			$GameMusic.stop()
 	pass
+	
 
 func check_collisions():
 	# All clients run identical deterministic simulation — no host guard needed
@@ -173,7 +179,7 @@ func check_collisions():
 					var free_pos = rand_free_pos()
 					food_tile.teleport_to(free_pos.x, free_pos.y)
 					print("[FOOD] Moved food to ", free_pos)
-
+					
 			# Snake collision
 			else:
 				if tile1.is_head:
