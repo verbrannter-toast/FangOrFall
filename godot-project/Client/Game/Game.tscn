@@ -18,6 +18,10 @@ font_size = 30
 [sub_resource type="LabelSettings" id="LabelSettings_w4wa0"]
 font_size = 30
 
+[sub_resource type="LabelSettings" id="LabelSettings_x0lxx"]
+font = ExtResource("11_w4wa0")
+font_size = 200
+
 [node name="GridMap" type="Control" unique_id=1253301198]
 layout_mode = 3
 anchors_preset = 15
@@ -95,3 +99,15 @@ theme_override_fonts/font = ExtResource("11_w4wa0")
 text = " Opp Score:"
 label_settings = SubResource("LabelSettings_w4wa0")
 vertical_alignment = 1
+
+[node name="CountdownContainer" type="CenterContainer" parent="HUD" unique_id=979914720]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CountdownLabel" type="Label" parent="HUD/CountdownContainer" unique_id=960608870]
+layout_mode = 2
+text = "3"
+label_settings = SubResource("LabelSettings_x0lxx")

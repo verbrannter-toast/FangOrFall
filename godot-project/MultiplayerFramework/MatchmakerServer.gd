@@ -185,7 +185,8 @@ func create_new_match():
 		"players": new_match,
 		"inputs": {},
 		"tick_timer": 0.0,
-		"seed": shared_seed
+		"seed": shared_seed,
+		"started": false
 	}
 	for pid in new_match:
 		_match_sessions[match_id]["inputs"][pid] = -1
@@ -205,8 +206,26 @@ func create_new_match():
 	if parent and parent.has_method("add_log"):
 		var players_str = ", ".join(Array(new_match).map(func(x): return str(x)))
 		parent.add_log("[color=cyan]  Match created with players: " + players_str + "[/color]")
+	
+	_start_countdown(match_id, new_match, 3)
 
 	print("  Match created successfully\n")
+
+func _start_countdown(match_id: String, players: Array, seconds: int):
+	for i in range(seconds, 0, -1):
+		var msg = Message.new()
+		msg.content = {"countdown": i}
+		for pid in players:
+			_send_to_peer(pid, msg)
+		await get_tree().create_timer(1.0).timeout
+	
+	var go_msg = Message.new()
+	go_msg.content = { "countdown": 0}
+	for pid in players:
+		_send_to_peer(pid, go_msg)
+	
+	if _match_sessions.has(match_id):
+		_match_sessions[match_id]["started"] = true
 
 func _make_match_id(players: Array) -> String:
 	var sorted = players.duplicate()
@@ -215,6 +234,9 @@ func _make_match_id(players: Array) -> String:
 
 # Broadcast collected inputs to all players so each client runs the same tick
 func _tick_session(match_id: String, session: Dictionary):
+	if not session.get("started", false):
+		return
+	
 	var tick_msg = Message.new()
 	tick_msg.content = {
 		"server_tick": true,
@@ -230,6 +252,7 @@ func _tick_session(match_id: String, session: Dictionary):
 	# Reset inputs so stale values never carry into the next tick
 	for pid in session["players"]:
 		session["inputs"][pid] = -1
+	
 
 func remove_player_from_connections(id):
 	if _match_queue.has(id):

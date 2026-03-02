@@ -87,6 +87,13 @@ func _on_message(message: Message):
 		return
 	if message.match_start:
 		return
+	
+	if message.content.has("countdown"):
+		var count = message.content["countdown"]
+		if count == 0:
+			_game.get_node("HUD").countdown("GO!")
+		else:
+			_game.get_node("HUD").countdown(count)
 
 	if message.content is Dictionary:
 		# calculate round-trip time

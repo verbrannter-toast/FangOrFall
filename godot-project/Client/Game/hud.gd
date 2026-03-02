@@ -14,4 +14,9 @@ func update(scores: Array):
 			my_panel.text = " My Score: %d"%[scores[i]]
 		else:
 			opp_panel.text = " Opp Score: %d"%[scores[i]]
-	
+
+func countdown(text: String):
+	$CountdownContainer/CountdownLabel.text = text
+	$CountdownContainer/CountdownLabel.show()
+	await get_tree().create_timer(1.0).timeout
+	$CountdownContainer/CountdownLabel.hide()
