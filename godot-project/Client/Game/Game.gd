@@ -20,10 +20,6 @@ var players = []
 var player_scores = []
 var players_dead = []
 
-# Dedicated RNG instance — isolated from Godot's global RNG so engine internals
-# (physics, animations, etc.) cannot cause the two clients to diverge
-var _rng := RandomNumberGenerator.new()
-
 @onready var tilemap: TileMap = $"TileMap-Walls"
 @onready var camera: Camera2D = $Camera2D
 
@@ -78,9 +74,6 @@ func setup(player_number: int, relay_client: ClientManager):
 func _set_direction(player_number: int, direction: int):
 	if players[player_number] != null:
 		players[player_number].current_direction = direction
-
-func set_seed(s: int):
-	_rng.seed = s
 
 # Called by Client.gd on every server_tick broadcast
 func tick():
@@ -153,7 +146,7 @@ func check_collisions():
 		if tile.is_disabled:
 			continue
 
-		var pos = Vector2(tile.tile_x, tile.tile_y)
+		var pos = Vector2i(tile.tile_x, tile.tile_y)
 
 		if not tile_positions.has(pos):
 			tile_positions[pos] = tile
@@ -260,8 +253,8 @@ func rand_free_pos() -> Vector2:
 	var max_tries = 200
 	var tries = 0
 	while tries < max_tries:
-		var rand_x = _rng.randi_range(min_x + 1, max_x - 1)
-		var rand_y = _rng.randi_range(min_y + 1, max_y - 1)
+		var rand_x = randi_range(min_x + 1, max_x - 1)
+		var rand_y = randi_range(min_y + 1, max_y - 1)
 		var rand_pos = Vector2i(rand_x, rand_y)
 		if not occupied.has(rand_pos):
 			print("[FOOD SPAWN] Found free position: ", rand_pos, " after ", tries, " tries")
