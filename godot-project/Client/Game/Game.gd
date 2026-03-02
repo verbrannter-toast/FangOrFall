@@ -146,7 +146,7 @@ func check_collisions():
 		if tile.is_disabled:
 			continue
 
-		var pos = Vector2(tile.tile_x, tile.tile_y)
+		var pos = Vector2i(tile.tile_x, tile.tile_y)
 
 		if not tile_positions.has(pos):
 			tile_positions[pos] = tile
