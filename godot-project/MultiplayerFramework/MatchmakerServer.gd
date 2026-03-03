@@ -251,16 +251,20 @@ func _tick_session(match_id: String, session: Dictionary):
 		if not session["alive"][pi]:
 			continue
 		var head = session["snakes"][pi][0]
-		var dir = session["directions"][pi]
-		# The tile directly in front of the head — food lands here to be eaten next tick
-		var in_front = head + DIR_VECTORS[dir]
 		for fi in range(session["food"].size()):
 			var food_pos = session["food"][fi]["pos"]
 			var diff = food_pos - head
-			if abs(diff.x) <= 3 and abs(diff.y) <= 3:
-				# Only pull if destination isn't a wall or snake body
-				if not _walls.has(in_front) and not _is_occupied_by_snake(in_front, session["snakes"]):
-					session["food"][fi]["pos"] = in_front
+			if abs(diff.x) <= 5 and abs(diff.y) <= 5:
+				# Move one step closer on whichever axis is larger
+				var step = Vector2i.ZERO
+				if abs(diff.x) >= abs(diff.y):
+					step.x = -2 if diff.x > 0 else (2 if diff.x < 0 else 0)
+				else:
+					step.y = -2 if diff.y > 0 else (2 if diff.y < 0 else 0)
+				var new_pos = food_pos + step
+				# Only move if not into a wall or another food
+				if not _walls.has(new_pos):
+					session["food"][fi]["pos"] = new_pos
 
 	# Tick down powerup durations and remove expired ones
 	for pw in session["powerups"]:
@@ -332,7 +336,7 @@ func _tick_session(match_id: String, session: Dictionary):
 		session["scores"][pi] += score_amount
 		
 		if food_type == "magnet":
-			session["powerups"].append({"player": pi, "type": "magnet", "ticks": 25})
+			session["powerups"].append({"player": pi, "type": "magnet", "ticks": 50})
 			print("[SERVER] P", pi, " picked up magnet")
 		
 		session["food"][fi] = _spawn_food_item(session["snakes"], session["food"], session["rng"])
@@ -395,7 +399,7 @@ func _rand_free_pos(snakes: Array, food: Array, rng: RandomNumberGenerator) -> V
 		for seg in snake:
 			occupied.append(seg)
 	for f in food:
-		# food array contains dicts now — extract pos
+		# food array contains dicts now
 		if f is Dictionary:
 			occupied.append(f["pos"])
 		else:
@@ -414,9 +418,9 @@ func _spawn_food_item(snakes: Array, food: Array, rng: RandomNumberGenerator) ->
 	var pos = _rand_free_pos(snakes, food, rng)
 	var roll = rng.randf()
 	var type: String
-	if roll < 0.90:
+	if roll < 0.80:
 		type = "apple"
-	elif roll < 0.95:
+	elif roll < 0.90:
 		type = "golden"
 	else:
 		type = "magnet"
