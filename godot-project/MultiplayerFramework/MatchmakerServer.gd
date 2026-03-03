@@ -243,7 +243,7 @@ func _tick_session(match_id: String, session: Dictionary):
 			session["directions"][i] = dir
 		session["inputs"][pid] = -1
 
-	# Magnet effect
+	# Magnet effect — snap food within radius to adjacent tile of head
 	for pw in session["powerups"]:
 		if pw["type"] != "magnet":
 			continue
@@ -251,20 +251,16 @@ func _tick_session(match_id: String, session: Dictionary):
 		if not session["alive"][pi]:
 			continue
 		var head = session["snakes"][pi][0]
+		var dir = session["directions"][pi]
+		# The tile directly in front of the head — food lands here to be eaten next tick
+		var in_front = head + DIR_VECTORS[dir]
 		for fi in range(session["food"].size()):
 			var food_pos = session["food"][fi]["pos"]
 			var diff = food_pos - head
 			if abs(diff.x) <= 3 and abs(diff.y) <= 3:
-				# Move one step closer on whichever axis is larger
-				var step = Vector2i.ZERO
-				if abs(diff.x) >= abs(diff.y):
-					step.x = -2 if diff.x > 0 else (2 if diff.x < 0 else 0)
-				else:
-					step.y = -2 if diff.y > 0 else (2 if diff.y < 0 else 0)
-				var new_pos = food_pos + step
-				# Only move if not into a wall or another food
-				if not _walls.has(new_pos):
-					session["food"][fi]["pos"] = new_pos
+				# Only pull if destination isn't a wall or snake body
+				if not _walls.has(in_front) and not _is_occupied_by_snake(in_front, session["snakes"]):
+					session["food"][fi]["pos"] = in_front
 
 	# Tick down powerup durations and remove expired ones
 	for pw in session["powerups"]:
@@ -362,6 +358,13 @@ func _tick_session(match_id: String, session: Dictionary):
 
 	_broadcast_state(match_id, session)
 
+func _is_occupied_by_snake(pos: Vector2i, snakes: Array) -> bool:
+	for snake in snakes:
+		for seg in snake:
+			if seg == pos:
+				return true
+	return false
+
 func _broadcast_state(match_id: String, session: Dictionary):
 	var msg = Message.new()
 	msg.content = {
@@ -408,9 +411,9 @@ func _spawn_food_item(snakes: Array, food: Array, rng: RandomNumberGenerator) ->
 	var pos = _rand_free_pos(snakes, food, rng)
 	var roll = rng.randf()
 	var type: String
-	if roll < 0.80:
+	if roll < 0.90:
 		type = "apple"
-	elif roll < 0.90:
+	elif roll < 0.95:
 		type = "golden"
 	else:
 		type = "magnet"
