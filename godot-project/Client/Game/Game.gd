@@ -11,9 +11,6 @@ var _relay_client: ClientManager
 var _player_number: int
 var _players_alive: int
 
-var _pending_food_state: Array = []
-var _has_pending_food: bool = false
-
 var _prev_food: Array = []
 
 var foods = []
@@ -69,36 +66,32 @@ func apply_server_state(state: Dictionary):
 	var directions = state["directions"]
 	var alive = state["alive"]
 	var scores = state["scores"]
-	var food_items = state["food"]
+	var food_positions = state["food"]
 
 	player_scores = scores.duplicate()
 	$HUD.update(player_scores)
 
-	# Apply food from previous tick — gives tween one full tick (200ms) to animate
-	if _has_pending_food:
-		_sync_food(_pending_food_state)
-	_pending_food_state = food_items.duplicate(true)
-	_has_pending_food = true
-
-	# Detect food eaten by comparing pending (what we're about to show) 
-	# against the new incoming state
-	if _pending_food_state.size() == food_items.size():
-		for i in range(food_items.size()):
-			if _pending_food_state[i]["pos"] != food_items[i]["pos"]:
+	# Detect food eaten — any position that changed means a food was consumed
+	if _prev_food.size() == food_positions.size():
+		for i in range(food_positions.size()):
+			if _prev_food[i] != food_positions[i]:
 				$EatApple.play()
-				break
+				break  # one sound even if two eaten simultaneously
+	_prev_food = food_positions.duplicate()
 
 	for i in range(players.size()):
 		if not alive[i] and not players_dead[i]:
 			players_dead[i] = true
 			_players_alive -= 1
 			players[i].kill()
+			# Stop music as soon as someone dies
 			$GameMusic.stop()
 			continue
 		if not alive[i]:
 			continue
 		players[i].apply_state(snakes[i], snake_dirs[i])
 
+	_sync_food(food_positions)
 	$PlayerInput.set_committed_direction(directions[_player_number])
 
 func _sync_food(food_items: Array):
@@ -108,9 +101,7 @@ func _sync_food(food_items: Array):
 		tile.size = Vector2.ONE * tile_size
 		tile.tile_size = tile_size
 		tile.is_food = true
-		tile.food_type = "apple"
 		foods.append(tile)
-		tile.refresh_texture()  # ← always refresh on creation
 
 	while foods.size() > food_items.size():
 		foods[-1].queue_free()
@@ -118,24 +109,6 @@ func _sync_food(food_items: Array):
 
 	for i in range(food_items.size()):
 		var item = food_items[i]
-		var tile = foods[i]
-
-		if tile.food_type != item["type"]:
-			tile.food_type = item["type"]
-			tile.refresh_texture()  # ← only refresh when type actually changes
-
-		var new_pos = item["pos"]
-		if tile.tile_x != new_pos.x or tile.tile_y != new_pos.y:
-			var old_tile_x = tile.tile_x
-			var old_tile_y = tile.tile_y
-			tile.tile_x = new_pos.x
-			tile.tile_y = new_pos.y
-			var target = Vector2(new_pos.x * tile_size, new_pos.y * tile_size)
-			var dist = abs(new_pos.x - old_tile_x) + abs(new_pos.y - old_tile_y)
-			if dist == 1 and old_tile_x != 0 and old_tile_y != 0:
-				var tween = tile.create_tween()
-				tween.tween_property(tile, "position", target, 0.15)
-				tween.set_trans(Tween.TRANS_BACK)
-				tween.set_ease(Tween.EASE_OUT)
-			else:
-				tile.position = target
+		foods[i].teleport_to(item["pos"].x, item["pos"].y)
+		foods[i].food_type = item["type"]
+		foods[i].refresh_texture()
