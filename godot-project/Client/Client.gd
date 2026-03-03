@@ -103,6 +103,8 @@ func _on_message(message: Message):
 			var winner = message.content.get("winner", -1)
 			# Scores come from the server now — no need to read _game.player_scores
 			var scores = message.content.get("scores", [])
+			if _game != null and is_instance_valid(_game):
+				_game.get_node("GameMusic").stop()
 			_on_game_over(winner, scores)
 			return
 

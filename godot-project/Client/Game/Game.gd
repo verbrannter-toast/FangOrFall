@@ -11,6 +11,8 @@ var _relay_client: ClientManager
 var _player_number: int
 var _players_alive: int
 
+var _prev_food: Array = []
+
 var foods = []
 var players = []
 var player_scores = []
@@ -69,19 +71,27 @@ func apply_server_state(state: Dictionary):
 	player_scores = scores.duplicate()
 	$HUD.update(player_scores)
 
+	# Detect food eaten — any position that changed means a food was consumed
+	if _prev_food.size() == food_positions.size():
+		for i in range(food_positions.size()):
+			if _prev_food[i] != food_positions[i]:
+				$EatApple.play()
+				break  # one sound even if two eaten simultaneously
+	_prev_food = food_positions.duplicate()
+
 	for i in range(players.size()):
 		if not alive[i] and not players_dead[i]:
 			players_dead[i] = true
 			_players_alive -= 1
 			players[i].kill()
+			# Stop music as soon as someone dies
+			$GameMusic.stop()
 			continue
 		if not alive[i]:
 			continue
 		players[i].apply_state(snakes[i], snake_dirs[i])
 
 	_sync_food(food_positions)
-
-	# Update committed direction for 180 check
 	$PlayerInput.set_committed_direction(directions[_player_number])
 
 func _sync_food(positions: Array):
