@@ -9,58 +9,43 @@ var _connected_players = {}
 var _match_queue = []
 var _next_id = 1
 
-# sessions: match_id -> dict
 var _match_sessions: Dictionary = {}
 var _tick_rate: float = 0.2
 var _creating_match: bool = false
+
+# Must match your TileMap boundaries exactly
+const MAP_MIN_X = 1
+const MAP_MIN_Y = 1
+const MAP_MAX_X = 119
+const MAP_MAX_Y = 67
+
+const SPAWN_POSITIONS = [Vector2i(9, 12), Vector2i(27, 22)]
+const SPAWN_DIRECTIONS = [1, 3]  # RIGHT, LEFT
+const DIRECTIONS = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
 
 signal client_connected(id: int)
 signal client_disconnected(id: int)
 signal match_created(player_ids: Array)
 signal message_received(from_id: int, message_type: String)
 
-# Grid movement directions: 0=UP,1=RIGHT,2=DOWN,3=LEFT
-const DIRS := [Vector2i(0,-1), Vector2i(1,0), Vector2i(0,1), Vector2i(-1,0)]
-
-# --- CONFIG ---
-# If you want walls from a TileMap, set these and implement _load_walls_from_scene().
-# Otherwise it behaves as simple bounds-only walls.
-const USE_TILEMAP_WALLS := true
-const GAME_SCENE_PATH := "res://Client/Game/Game.tscn"  # adjust if needed
-const WALL_TILEMAP_NODE := "TileMap-Walls"              # adjust if needed
-
-const DEFAULT_MAP_W := 30
-const DEFAULT_MAP_H := 30
-const FOOD_COUNT := 4
-
 func _ready():
 	var env_port = OS.get_environment("PORT")
 	if env_port != "":
 		PORT = int(env_port)
-
 	print("=== MATCHMAKING SERVER (Authoritative) ===")
-	print("Starting on port ", PORT)
-	print("Match size: ", match_size, " players")
-	print("Tick rate: ", _tick_rate, "s")
-
 	var err = _server.listen(PORT, "127.0.0.1")
 	if err != OK:
-		print("ERROR: Unable to start server: ", err)
+		print("ERROR: ", err)
 		set_process(false)
 		return
-
+	print("Listening on port ", PORT)
 	_logger_coroutine()
 	_heartbeat_coroutine()
 
 func _logger_coroutine():
 	while true:
 		await get_tree().create_timer(5.0).timeout
-		print("
---- SERVER STATUS ---")
-		print("Connected players: ", _connected_players.keys())
-		print("Match queue: ", _match_queue)
-		print("Active sessions: ", _match_sessions.keys())
-		print("--------------------")
+		print("\n--- SERVER STATUS --- Sessions: ", _match_sessions.keys(), " Queue: ", _match_queue, "\n")
 
 func _heartbeat_coroutine():
 	while true:
@@ -72,464 +57,320 @@ func _heartbeat_coroutine():
 			_send_to_peer(id, msg)
 
 func _process(delta):
-	# Accept connections
 	if _server.is_connection_available():
 		var peer = _server.take_connection()
 		peer.set_no_delay(true)
 		var ws_peer = WebSocketPeer.new()
 		var err = ws_peer.accept_stream(peer)
 		if err != OK:
-			print("ERROR: Failed to accept WebSocket: ", err)
 			return
 		var id = _next_id
 		_next_id += 1
 		_peers[id] = {"ws": ws_peer, "tcp": peer, "ready": false}
 		print("-> Client ", id, " connecting...")
 
-	# Poll connections
-	var to_remove := []
+	var to_remove = []
 	for id in _peers.keys():
 		var peer_data = _peers[id]
-		var ws_peer: WebSocketPeer = peer_data["ws"]
+		var ws_peer = peer_data["ws"]
 		ws_peer.poll()
 		match ws_peer.get_ready_state():
-			WebSocketPeer.STATE_CONNECTING:
-				pass
 			WebSocketPeer.STATE_OPEN:
 				if not peer_data["ready"]:
 					peer_data["ready"] = true
 					_connected(id)
-				var processed := 0
+				var processed = 0
 				while ws_peer.get_available_packet_count() > 0 and processed < 50:
 					_on_data(id, ws_peer.get_packet())
 					processed += 1
-			WebSocketPeer.STATE_CLOSING:
-				pass
 			WebSocketPeer.STATE_CLOSED:
 				_disconnected(id)
 				to_remove.append(id)
-
 	for id in to_remove:
 		_peers.erase(id)
 
-	# Create matches
 	if _match_queue.size() >= match_size and not _creating_match:
 		create_new_match()
 
-	# Tick active sessions
 	for match_id in _match_sessions.keys():
 		var session = _match_sessions[match_id]
+		if not session.get("started", false):
+			continue
 		session["tick_timer"] += delta
 		if session["tick_timer"] >= _tick_rate:
 			session["tick_timer"] -= _tick_rate
 			_tick_session(match_id, session)
 
-func _connected(id: int) -> void:
+func _connected(id):
 	print("  Client ", id, " connected")
 	_connected_players[id] = []
 	_match_queue.append(id)
-
 	var message = Message.new()
 	message.server_login = true
 	message.content = id
 	_send_to_peer(id, message)
-
 	emit_signal("client_connected", id)
 
-func _disconnected(id: int) -> void:
-	print("<- Client ", id, " disconnected")
-	_remove_session_for_player(id)
+func create_new_match():
+	_creating_match = true
+	var new_match = []
+	for i in range(match_size):
+		new_match.append(_match_queue[i])
+
+	for i in range(match_size):
+		var player_id = _match_queue[0]
+		var message = Message.new()
+		message.match_start = true
+		message.content = new_match
+		_send_to_peer(player_id, message)
+		_match_queue.remove_at(0)
+
+	for i in range(new_match.size()):
+		_connected_players[new_match[i]] = new_match
+
+	var match_id = _make_match_id(new_match)
+	var session = _create_session(new_match)
+	_match_sessions[match_id] = session
+	emit_signal("match_created", new_match)
+
+	# Send initial state so clients can render the board before countdown
+	await get_tree().create_timer(0.1).timeout
+	_broadcast_state(match_id, session)
+
+	_start_countdown(match_id, new_match, 3)
+
+func _create_session(players: Array) -> Dictionary:
+	var rng = RandomNumberGenerator.new()
+	rng.randomize()
+
+	var snakes = []
+	var directions = []
+	var alive = []
+	var scores = []
+	for i in range(players.size()):
+		var spawn = SPAWN_POSITIONS[i]
+		var dir = SPAWN_DIRECTIONS[i]
+		var body: Array[Vector2i] = []
+		body.append(spawn)
+		for j in range(1, 3):
+			body.append(spawn + DIRECTIONS[dir] * -j)
+		snakes.append(body)
+		directions.append(dir)
+		alive.append(true)
+		scores.append(0)
+
+	var food: Array[Vector2i] = []
+	for i in range(4):
+		food.append(_rand_free_pos(snakes, food, rng))
+
+	return {
+		"players": players,
+		"inputs": {},
+		"tick_timer": 0.0,
+		"started": false,
+		"snakes": snakes,
+		"directions": directions,
+		"alive": alive,
+		"scores": scores,
+		"food": food,
+		"rng": rng,
+		"tick": 0
+	}
+
+func _start_countdown(match_id: String, players: Array, seconds: int):
+	for i in range(seconds, 0, -1):
+		var msg = Message.new()
+		msg.content = {"countdown": i}
+		for pid in players:
+			_send_to_peer(pid, msg)
+		await get_tree().create_timer(1.0).timeout
+
+	var go_msg = Message.new()
+	go_msg.content = {"countdown": 0}
+	for pid in players:
+		_send_to_peer(pid, go_msg)
+
+	if _match_sessions.has(match_id):
+		_match_sessions[match_id]["started"] = true
+	_creating_match = false
+
+func _tick_session(match_id: String, session: Dictionary):
+	session["tick"] += 1
+
+	# Apply inputs — reject 180 turns server-side
+	for i in range(session["players"].size()):
+		var pid = session["players"][i]
+		var dir = session["inputs"].get(pid, -1)
+		if dir != -1 and not _is_180(session["directions"][i], dir):
+			session["directions"][i] = dir
+		session["inputs"][pid] = -1
+
+	# Move all alive snakes (push new head, pop tail — tail re-added if food eaten)
+	for i in range(session["snakes"].size()):
+		if not session["alive"][i]:
+			continue
+		var snake = session["snakes"][i]
+		var new_head = snake[0] + DIRECTIONS[session["directions"][i]]
+		snake.push_front(new_head)
+		snake.pop_back()
+
+	# Detect deaths
+	var deaths = []
+	for i in range(session["snakes"].size()):
+		if not session["alive"][i]:
+			continue
+		var head = session["snakes"][i][0]
+
+		# Wall
+		if head.x <= 0 or head.x >= MAP_MAX_X or head.y <= 0 or head.y >= MAP_MAX_Y:
+			print("[SERVER] P", i, " wall at ", head)
+			deaths.append(i)
+			continue
+
+		# Self collision
+		for j in range(1, session["snakes"][i].size()):
+			if head == session["snakes"][i][j]:
+				print("[SERVER] P", i, " self-collision")
+				deaths.append(i)
+				break
+
+	# Head into any segment of other snakes
+	for i in range(session["snakes"].size()):
+		if not session["alive"][i] or deaths.has(i):
+			continue
+		for j in range(session["snakes"].size()):
+			if i == j:
+				continue
+			if not session["alive"][j]:
+				continue
+			for seg in session["snakes"][j]:
+				if session["snakes"][i][0] == seg:
+					deaths.append(i)
+					break
+
+	# Food collection
+	var food_eaten = {}
+	for i in range(session["snakes"].size()):
+		if not session["alive"][i] or deaths.has(i):
+			continue
+		for fi in range(session["food"].size()):
+			if session["snakes"][i][0] == session["food"][fi]:
+				food_eaten[fi] = i
+				break
+
+	# Apply food — grow and relocate
+	for fi in food_eaten.keys():
+		var pi = food_eaten[fi]
+		session["snakes"][pi].append(session["snakes"][pi][-1])
+		session["scores"][pi] += 1
+		session["food"][fi] = _rand_free_pos(session["snakes"], session["food"], session["rng"])
+		print("[SERVER] P", pi, " ate food -> score ", session["scores"][pi], " new food: ", session["food"][fi])
+
+	# Apply deaths
+	for i in deaths:
+		if session["alive"][i]:
+			session["alive"][i] = false
+			print("[SERVER] P", i, " died")
+
+	# Game over check
+	var alive_count = session["alive"].count(true)
+	if alive_count <= 1:
+		var winner = -1
+		for i in range(session["alive"].size()):
+			if session["alive"][i]:
+				winner = i
+				break
+		print("[SERVER] Game over — winner: ", winner)
+		_broadcast_gameover(match_id, session, winner)
+		_match_sessions.erase(match_id)
+		return
+
+	_broadcast_state(match_id, session)
+
+func _broadcast_state(match_id: String, session: Dictionary):
+	var msg = Message.new()
+	msg.content = {
+		"server_tick": true,
+		"tick": session["tick"],
+		"snakes": session["snakes"],
+		"directions": session["directions"],
+		"alive": session["alive"],
+		"scores": session["scores"],
+		"food": session["food"],
+	}
+	for pid in session["players"]:
+		_send_to_peer(pid, msg)
+
+func _broadcast_gameover(match_id: String, session: Dictionary, winner: int):
+	var msg = Message.new()
+	msg.content = {"gameover": true, "winner": winner, "scores": session["scores"]}
+	for pid in session["players"]:
+		_send_to_peer(pid, msg)
+
+func _is_180(current_dir: int, new_dir: int) -> bool:
+	return (current_dir + 2) % 4 == new_dir
+
+func _rand_free_pos(snakes: Array, food: Array, rng: RandomNumberGenerator) -> Vector2i:
+	var occupied: Array[Vector2i] = []
+	for snake in snakes:
+		for seg in snake:
+			occupied.append(seg)
+	for f in food:
+		occupied.append(f)
+	for _try in range(500):
+		var pos = Vector2i(rng.randi_range(MAP_MIN_X + 1, MAP_MAX_X - 1), rng.randi_range(MAP_MIN_Y + 1, MAP_MAX_Y - 1))
+		if not occupied.has(pos):
+			return pos
+	return Vector2i(MAP_MIN_X + 2, MAP_MIN_Y + 2)
+
+func _make_match_id(players: Array) -> String:
+	var sorted = players.duplicate()
+	sorted.sort()
+	return "_".join(sorted.map(func(x): return str(x)))
+
+func remove_player_from_connections(id):
 	if _match_queue.has(id):
 		_match_queue.erase(id)
-	_connected_players.erase(id)
-	emit_signal("client_disconnected", id)
+	if _connected_players.has(id):
+		if _connected_players[id] != null:
+			_connected_players[id].erase(id)
+		_connected_players.erase(id)
 
-func _remove_session_for_player(id: int) -> void:
+func _remove_session_for_player(id: int):
 	for match_id in _match_sessions.keys():
-		if id in _match_sessions[match_id]["players"]:
+		var session = _match_sessions[match_id]
+		if id in session["players"]:
+			for pid in session["players"]:
+				if pid != id:
+					var msg = Message.new()
+					msg.content = {"gameover": true, "winner": session["players"].find(pid), "scores": session["scores"]}
+					_send_to_peer(pid, msg)
 			_match_sessions.erase(match_id)
 			return
 
-func _on_data(id: int, packet: PackedByteArray) -> void:
-	var message := Message.new()
-	message.from_raw(packet)
+func _disconnected(id):
+	print("<- Client ", id, " disconnected")
+	_remove_session_for_player(id)
+	remove_player_from_connections(id)
+	emit_signal("client_disconnected", id)
 
-	# Input messages: store latest input for that peer in its session
+func _on_data(id, packet: PackedByteArray):
+	var message = Message.new()
+	message.from_raw(packet)
 	if message.content is Dictionary and message.content.has("player_input"):
-		var dir := int(message.content["player_input"])
+		var dir = int(message.content["player_input"])
 		for match_id in _match_sessions.keys():
 			var session = _match_sessions[match_id]
 			if id in session["players"]:
 				session["inputs"][id] = dir
 				break
 		return
+	emit_signal("message_received", id, "data")
 
-	# (Optional) forward other messages if you still need chat/debug
-
-func create_new_match() -> void:
-	_creating_match = true
-
-	var new_match := []
-	for i in range(match_size):
-		new_match.append(_match_queue[i])
-
-	# Send match_start with player peer IDs
-	for i in range(match_size):
-		var player_id = _match_queue[0]
-		var msg := Message.new()
-		msg.match_start = true
-		msg.content = new_match
-		_send_to_peer(player_id, msg)
-		_match_queue.remove_at(0)
-
-	# Update connected player groups
-	for pid in new_match:
-		_connected_players[pid] = new_match
-
-	# Create authoritative session
-	var match_id := _make_match_id(new_match)
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-
-	var session := {
-		"players": new_match,
-		"inputs": {},
-		"tick_timer": 0.0,
-		"started": false,
-		"tick": 0,
-		"rng": rng,
-		"map_w": DEFAULT_MAP_W,
-		"map_h": DEFAULT_MAP_H,
-		"walls": {},    # Dictionary used as a set: key="x,y" -> true
-		"foods": [],    # Array[Vector2i]
-		"snakes": [],   # Array[Dictionary] index 0..match_size-1
-		"scores": []
-	}
-
-	# Optional: load walls/map size from a TileMap scene
-	if USE_TILEMAP_WALLS:
-		_load_walls_from_scene(session)
-
-	# Init per-peer input slots
-	for pid in new_match:
-		session["inputs"][pid] = -1
-
-	# Init snakes in match order (index 0..1)
-	for i in range(new_match.size()):
-		session["snakes"].append(_make_initial_snake(session, i))
-		session["scores"].append(0)
-
-	# Init foods
-	for i in range(FOOD_COUNT):
-		session["foods"].append(_random_free_pos(session))
-
-	_match_sessions[match_id] = session
-	emit_signal("match_created", new_match)
-
-	_start_countdown(match_id, new_match, 3)
-
-func _start_countdown(match_id: String, players: Array, seconds: int) -> void:
-	for i in range(seconds, 0, -1):
-		var msg := Message.new()
-		msg.content = {"countdown": str(i)}
-		for pid in players:
-			_send_to_peer(pid, msg)
-		await get_tree().create_timer(1.0).timeout
-
-	var go := Message.new()
-	go.content = {"countdown": 0}
-	for pid in players:
-		_send_to_peer(pid, go)
-
-	if _match_sessions.has(match_id):
-		_match_sessions[match_id]["started"] = true
-	_creating_match = false
-
-# --- Authoritative tick ---
-func _tick_session(match_id: String, session: Dictionary) -> void:
-	if not session.get("started", false):
-		return
-
-	# 1) Apply inputs to snake directions
-	for i in range(session["players"].size()):
-		var peer_id: int = session["players"][i]
-		var inp: int = int(session["inputs"][peer_id])
-		if inp != -1:
-			_apply_dir(session["snakes"][i], inp)
-		# reset so stale values never carry
-		session["inputs"][peer_id] = -1
-
-	# 2) Advance simulation
-	session["tick"] += 1
-	_simulate_step(session)
-
-	# 3) Broadcast state
-	_broadcast_state(session)
-
-# --- Simulation helpers ---
-func _apply_dir(snake: Dictionary, new_dir: int) -> void:
-	# disallow instant reverse
-	var cur: int = snake["dir"]
-	if (cur + 2) % 4 == new_dir:
-		return
-	snake["dir"] = new_dir
-
-func _simulate_step(session: Dictionary) -> void:
-	var map_w: int = session["map_w"]
-	var map_h: int = session["map_h"]
-
-	# Prepare occupancy sets
-	var body_set := {}  # key="x,y" -> ownerIndex
-	for si in range(session["snakes"].size()):
-		var s = session["snakes"][si]
-		if not s["alive"]:
-			continue
-		for p in s["body"]:
-			body_set[_k(p)] = si
-
-	# Compute next heads first (for head-head)
-	var next_heads: Array = []
-	next_heads.resize(session["snakes"].size())
-	for si in range(session["snakes"].size()):
-		var s = session["snakes"][si]
-		if not s["alive"]:
-			next_heads[si] = null
-			continue
-		var head: Vector2i = s["body"][0]
-		next_heads[si] = head + DIRS[s["dir"]]
-
-	# Resolve deaths from wall/bounds and head-head
-	var died := []
-	died.resize(session["snakes"].size())
-	for i in range(died.size()):
-		died[i] = false
-
-	# head-head same cell => both die
-	if session["snakes"].size() == 2:
-		if next_heads[0] != null and next_heads[1] != null and next_heads[0] == next_heads[1]:
-			died[0] = true
-			died[1] = true
-
-	# bounds / walls
-	for si in range(session["snakes"].size()):
-		if next_heads[si] == null:
-			continue
-		var nh: Vector2i = next_heads[si]
-		if nh.x < 0 or nh.y < 0 or nh.x >= map_w or nh.y >= map_h:
-			died[si] = true
-			continue
-		if session["walls"].has(_k(nh)):
-			died[si] = true
-
-	# Move snakes that are still alive (tentatively)
-	for si in range(session["snakes"].size()):
-		var s = session["snakes"][si]
-		if not s["alive"]:
-			continue
-		if died[si]:
-			s["alive"] = false
-			continue
-
-		var nh: Vector2i = next_heads[si]
-		s["body"].insert(0, nh)
-
-		# check food
-		var ate_idx := _food_index_at(session, nh)
-		if ate_idx != -1:
-			session["scores"][si] += 1
-			# respawn that food
-			session["foods"][ate_idx] = _random_free_pos(session)
-			# keep tail (grow): do NOT pop
-		else:
-			# normal move: pop tail
-			s["body"].pop_back()
-
-	# After movement, resolve body collisions (including into other bodies)
-	# Rebuild body_set from new positions
-	body_set.clear()
-	for si in range(session["snakes"].size()):
-		var s = session["snakes"][si]
-		if not s["alive"]:
-			continue
-		for bi in range(s["body"].size()):
-			var p: Vector2i = s["body"][bi]
-			var key := _k(p)
-			if body_set.has(key):
-				# two bodies overlap => if any head involved, kill that snake
-				# simplest: kill both owners
-				s["alive"] = false
-				var other := int(body_set[key])
-				session["snakes"][other]["alive"] = false
-			else:
-				body_set[key] = si
-
-	# head into body (including own body)
-	for si in range(session["snakes"].size()):
-		var s = session["snakes"][si]
-		if not s["alive"]:
-			continue
-		var head: Vector2i = s["body"][0]
-		# check against all other segments excluding own head
-		for oi in range(session["snakes"].size()):
-			var o = session["snakes"][oi]
-			if not o["alive"]:
-				continue
-			for seg_i in range(o["body"].size()):
-				if oi == si and seg_i == 0:
-					continue
-				if o["body"][seg_i] == head:
-					s["alive"] = false
-					break
-
-	# Determine gameover
-	var alive_count := 0
-	var last_alive := -1
-	for si in range(session["snakes"].size()):
-		if session["snakes"][si]["alive"]:
-			alive_count += 1
-			last_alive = si
-
-	if alive_count <= 1:
-		_send_gameover(session, last_alive)
-
-func _broadcast_state(session: Dictionary) -> void:
-	var msg := Message.new()
-	msg.content = {
-		"state": true,
-		"tick": session["tick"],
-		"players": [],
-		"foods": []
-	}
-
-	for si in range(session["snakes"].size()):
-		var s = session["snakes"][si]
-		var body_out := []
-		for p in s["body"]:
-			body_out.append([p.x, p.y])
-		msg.content["players"].append({
-			"alive": s["alive"],
-			"dir": s["dir"],
-			"score": session["scores"][si],
-			"body": body_out
-		})
-
-	for f in session["foods"]:
-		msg.content["foods"].append([f.x, f.y])
-
-	for pid in session["players"]:
-		_send_to_peer(pid, msg)
-
-func _send_gameover(session: Dictionary, winner_index: int) -> void:
-	# prevent repeated gameover spam
-	if session.get("gameover_sent", false):
-		return
-	session["gameover_sent"] = true
-
-	var msg := Message.new()
-	msg.content = {
-		"gameover": true,
-		"winner": winner_index,
-		"scores": session["scores"]
-	}
-	for pid in session["players"]:
-		_send_to_peer(pid, msg)
-
-# --- Spawn / map helpers ---
-func _make_initial_snake(session: Dictionary, index: int) -> Dictionary:
-	# Replace with your SpawnPoint logic if you want.
-	var map_w: int = session["map_w"]
-	var map_h: int = session["map_h"]
-	var head := Vector2i(5, 5) if index == 0 else Vector2i(map_w - 6, map_h - 6)
-	var dir := 1 if index == 0 else 3
-	return {
-		"alive": true,
-		"dir": dir,
-		"body": [head, head - DIRS[dir], head - DIRS[dir]*2]
-	}
-
-func _random_free_pos(session: Dictionary) -> Vector2i:
-	var rng: RandomNumberGenerator = session["rng"]
-	var map_w: int = session["map_w"]
-	var map_h: int = session["map_h"]
-
-	for _tries in range(5000):
-		var p := Vector2i(rng.randi_range(0, map_w - 1), rng.randi_range(0, map_h - 1))
-		if session["walls"].has(_k(p)):
-			continue
-		if _pos_in_snakes(session, p):
-			continue
-		if _pos_in_foods(session, p):
-			continue
-		return p
-
-	# Fallback (should never happen unless map is full)
-	return Vector2i(1, 1)
-
-func _pos_in_snakes(session: Dictionary, p: Vector2i) -> bool:
-	for s in session["snakes"]:
-		for bp in s["body"]:
-			if bp == p:
-				return true
-	return false
-
-func _pos_in_foods(session: Dictionary, p: Vector2i) -> bool:
-	for f in session["foods"]:
-		if f == p:
-			return true
-	return false
-
-func _food_index_at(session: Dictionary, p: Vector2i) -> int:
-	for i in range(session["foods"].size()):
-		if session["foods"][i] == p:
-			return i
-	return -1
-
-func _k(p: Vector2i) -> String:
-	return str(p.x) + "," + str(p.y)
-
-func _load_walls_from_scene(session: Dictionary) -> void:
-	# Load TileMap walls from the same Game scene the client uses.
-	# Since server and client share the same build, this is safe.
-	var packed := load(GAME_SCENE_PATH)
-	if packed == null:
-		push_warning("Could not load game scene for walls; using defaults")
-		return
-
-	var inst = packed.instantiate()
-	# We do NOT add it to the active scene tree permanently.
-	add_child(inst)
-
-	var tm: TileMap = inst.get_node_or_null(WALL_TILEMAP_NODE)
-	if tm == null:
-		push_warning("Could not find TileMap node '%s'; using defaults" % WALL_TILEMAP_NODE)
-		inst.queue_free()
-		return
-
-	var used := tm.get_used_rect()
-	session["map_w"] = used.size.x
-	session["map_h"] = used.size.y
-
-	for cell in tm.get_used_cells(0):
-		session["walls"][_k(cell)] = true
-
-	inst.queue_free()
-	return
-	session["map_w"] = used.size.x
-	session["map_h"] = used.size.y
-	for cell in tm.get_used_cells(0):
-		session["walls"][_k(cell)] = true
-	inst.queue_free()
-
-# --- networking ---
-func _send_to_peer(id: int, msg: Message) -> void:
+func _send_to_peer(id: int, message: Message) -> bool:
 	if not _peers.has(id):
-		return
-	var ws_peer: WebSocketPeer = _peers[id]["ws"]
+		return false
+	var ws_peer = _peers[id]["ws"]
 	if ws_peer.get_ready_state() != WebSocketPeer.STATE_OPEN:
-		return
-	ws_peer.send(msg.get_raw())
-
-func _make_match_id(players: Array) -> String:
-	var a := Array(players)
-	a.sort()
-	return ":".join(a.map(func(x): return str(x)))
+		return false
+	return ws_peer.send(message.get_raw()) == OK

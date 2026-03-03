@@ -12,7 +12,6 @@ var _last_ping_ms: int = -1
 
 func _ready():
 	_relay_client = $WebsocketClient
-	_relay_client.connect("on_message", _on_message)
 	_relay_client.connect("on_players_ready", _on_players_ready)
 
 	$StartScreen/StartGameButton.connect("pressed", _on_start_game)
@@ -82,40 +81,14 @@ func _return_to_menu():
 
 	print("[CLEANUP] Cleanup complete!")
 
-func _on_message(message: Message):
-	# ignore non-dict
-	if not (message.content is Dictionary):
+# In process_server_tick — replace the entire function:
+func process_server_tick(message: Message):
+	if _game == null or not is_instance_valid(_game):
 		return
+	_game.apply_server_state(message.content)
 
-	# Echo ping stays (but ideally add sender id / nonce)
-	if message.content.has("ping"):
-		var rtt = Time.get_ticks_msec() - int(message.content.get("t", 0))
-		_last_ping_ms = rtt
-		print("[PING] %d ms" % rtt)
-		return
-
-	if message.content.has("countdown"):
-		var count = message.content["countdown"]
-		if _game != null and is_instance_valid(_game):
-			if int(count) == 0:
-				_game.get_node("HUD").countdown("GO!")
-				_game.get_node("GameMusic").play()
-			else:
-				_game.get_node("HUD").countdown(str(count))
-		return
-
-	# NEW: authoritative state
-	if message.content.has("state"):
-		if _game != null and is_instance_valid(_game):
-			_game.apply_authoritative_state(message.content)
-		return
-
-	# NEW: authoritative gameover
-	if message.content.has("gameover"):
-		var winner = int(message.content.get("winner", -1))
-		var scores = message.content.get("scores", [])
-		_on_game_over(winner, scores)
-		return
+# Remove process_seed_message entirely — server handles food now
+# Remove the seed handler from _on_message
 
 func process_match_start():
 	print("=== STARTING GAME SETUP ===")
