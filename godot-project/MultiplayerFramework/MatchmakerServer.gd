@@ -25,7 +25,7 @@ const DIRS := [Vector2i(0,-1), Vector2i(1,0), Vector2i(0,1), Vector2i(-1,0)]
 # --- CONFIG ---
 # If you want walls from a TileMap, set these and implement _load_walls_from_scene().
 # Otherwise it behaves as simple bounds-only walls.
-const USE_TILEMAP_WALLS := false
+const USE_TILEMAP_WALLS := true
 const GAME_SCENE_PATH := "res://Client/Game/Game.tscn"  # adjust if needed
 const WALL_TILEMAP_NODE := "TileMap-Walls"              # adjust if needed
 
@@ -60,8 +60,7 @@ func _logger_coroutine():
 		print("Connected players: ", _connected_players.keys())
 		print("Match queue: ", _match_queue)
 		print("Active sessions: ", _match_sessions.keys())
-		print("--------------------
-")
+		print("--------------------")
 
 func _heartbeat_coroutine():
 	while true:
@@ -489,20 +488,32 @@ func _k(p: Vector2i) -> String:
 	return str(p.x) + "," + str(p.y)
 
 func _load_walls_from_scene(session: Dictionary) -> void:
-	# Optional: load TileMap walls into a set.
-	# This runs on the server; make sure the resource exists in the server build.
+	# Load TileMap walls from the same Game scene the client uses.
+	# Since server and client share the same build, this is safe.
 	var packed := load(GAME_SCENE_PATH)
 	if packed == null:
 		push_warning("Could not load game scene for walls; using defaults")
 		return
+
 	var inst = packed.instantiate()
+	# We do NOT add it to the active scene tree permanently.
 	add_child(inst)
+
 	var tm: TileMap = inst.get_node_or_null(WALL_TILEMAP_NODE)
 	if tm == null:
-		push_warning("Could not find TileMap node; using defaults")
+		push_warning("Could not find TileMap node '%s'; using defaults" % WALL_TILEMAP_NODE)
 		inst.queue_free()
 		return
+
 	var used := tm.get_used_rect()
+	session["map_w"] = used.size.x
+	session["map_h"] = used.size.y
+
+	for cell in tm.get_used_cells(0):
+		session["walls"][_k(cell)] = true
+
+	inst.queue_free()
+	return
 	session["map_w"] = used.size.x
 	session["map_h"] = used.size.y
 	for cell in tm.get_used_cells(0):
