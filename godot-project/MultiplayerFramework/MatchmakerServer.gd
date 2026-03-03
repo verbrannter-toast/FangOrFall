@@ -408,9 +408,9 @@ func _spawn_food_item(snakes: Array, food: Array, rng: RandomNumberGenerator) ->
 	var pos = _rand_free_pos(snakes, food, rng)
 	var roll = rng.randf()
 	var type: String
-	if roll < 0.90:
+	if roll < 0.80:
 		type = "apple"
-	elif roll < 0.95:
+	elif roll < 0.90:
 		type = "golden"
 	else:
 		type = "magnet"
