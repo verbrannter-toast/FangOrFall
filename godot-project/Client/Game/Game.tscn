@@ -78,7 +78,7 @@ script = ExtResource("10_n8sgs")
 
 [node name="MyPanel" type="PanelContainer" parent="HUD" unique_id=1242636225]
 offset_top = 4.0
-offset_right = 150.0
+offset_right = 170.0
 offset_bottom = 30.0
 
 [node name="Label" type="Label" parent="HUD/MyPanel" unique_id=613183331]
@@ -90,7 +90,7 @@ vertical_alignment = 1
 
 [node name="OppPanel" type="PanelContainer" parent="HUD" unique_id=2065072465]
 offset_top = 33.0
-offset_right = 150.0
+offset_right = 170.0
 offset_bottom = 59.0
 
 [node name="Label" type="Label" parent="HUD/OppPanel" unique_id=266970765]
