@@ -101,7 +101,9 @@ func _sync_food(food_items: Array):
 		tile.size = Vector2.ONE * tile_size
 		tile.tile_size = tile_size
 		tile.is_food = true
+		tile.food_type = "apple"
 		foods.append(tile)
+		tile.refresh_texture()  # ← always refresh on creation
 
 	while foods.size() > food_items.size():
 		foods[-1].queue_free()
@@ -110,13 +112,11 @@ func _sync_food(food_items: Array):
 	for i in range(food_items.size()):
 		var item = food_items[i]
 		var tile = foods[i]
-		
-		# Only update type if it changed
+
 		if tile.food_type != item["type"]:
 			tile.food_type = item["type"]
-			tile.refresh_texture()
-		
-		# If position changed, tween instead of teleport
+			tile.refresh_texture()  # ← only refresh when type actually changes
+
 		var new_pos = item["pos"]
 		if tile.tile_x != new_pos.x or tile.tile_y != new_pos.y:
 			var old_tile_x = tile.tile_x
@@ -124,16 +124,11 @@ func _sync_food(food_items: Array):
 			tile.tile_x = new_pos.x
 			tile.tile_y = new_pos.y
 			var target = Vector2(new_pos.x * tile_size, new_pos.y * tile_size)
-			
-			# If the food moved more than 1 tile it's being magneted — use a snappy tween
-			# If it moved exactly 1 tile or just respawned, teleport it normally
 			var dist = abs(new_pos.x - old_tile_x) + abs(new_pos.y - old_tile_y)
 			if dist == 1 and old_tile_x != 0 and old_tile_y != 0:
-				# Magnet pull — animate it
 				var tween = tile.create_tween()
 				tween.tween_property(tile, "position", target, 0.15)
 				tween.set_trans(Tween.TRANS_BACK)
 				tween.set_ease(Tween.EASE_OUT)
 			else:
-				# Respawn or first placement — teleport silently
 				tile.position = target

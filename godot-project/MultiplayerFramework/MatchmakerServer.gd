@@ -395,8 +395,11 @@ func _rand_free_pos(snakes: Array, food: Array, rng: RandomNumberGenerator) -> V
 		for seg in snake:
 			occupied.append(seg)
 	for f in food:
-		occupied.append(f)
-	# Sample randomly from the pre-built floor tile list
+		# food array contains dicts now — extract pos
+		if f is Dictionary:
+			occupied.append(f["pos"])
+		else:
+			occupied.append(f)
 	var attempts = 0
 	while attempts < 1000:
 		var idx = rng.randi_range(0, _floor_tiles.size() - 1)
