@@ -57,33 +57,6 @@ func setup(player_number: int, relay_client: ClientManager):
 	$PlayerInput.relay_client = relay_client
 	$HUD.setup(_player_number, players)
 
-	# Send wall map to server — only player 0 sends it to avoid duplicates
-	if player_number == 0:
-		_send_map_data()
-
-func _send_map_data():
-	if not tilemap:
-		return
-	var used_rect = tilemap.get_used_rect()
-	var walls = []
-	for x in range(used_rect.position.x, used_rect.end.x):
-		for y in range(used_rect.position.y, used_rect.end.y):
-			if tilemap.get_cell_source_id(0, Vector2i(x, y)) != -1:
-				walls.append([x, y])
-
-	var msg = Message.new()
-	msg.content = {
-		"map_data": {
-			"walls": walls,
-			"rect_x": used_rect.position.x,
-			"rect_y": used_rect.position.y,
-			"rect_w": used_rect.size.x,
-			"rect_h": used_rect.size.y,
-		}
-	}
-	_relay_client.send_data(msg)
-	print("[CLIENT] Sent map data: ", walls.size(), " wall tiles")
-
 # Called by Client.gd on every server_tick
 func apply_server_state(state: Dictionary):
 	var snakes = state["snakes"]
