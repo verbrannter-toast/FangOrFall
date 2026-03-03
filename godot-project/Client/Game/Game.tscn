@@ -34,6 +34,7 @@ script = ExtResource("1")
 [node name="Player" type="Control" parent="." unique_id=1785206355]
 anchors_preset = 0
 script = ExtResource("3")
+player = null
 
 [node name="SpawnPoint" parent="Player" unique_id=1266348971 instance=ExtResource("3_8tl4o")]
 position = Vector2(96, 192)

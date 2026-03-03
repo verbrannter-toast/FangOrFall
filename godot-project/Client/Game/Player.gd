@@ -172,28 +172,24 @@ func tick():
 func apply_state(snake_body: Array, seg_dirs: Array):
 	current_direction = seg_dirs[0] if seg_dirs.size() > 0 else current_direction
 
-	# Grow body to match server length
+	# Grow body to match server length — teleport new segments into position
+	# immediately so they don't fly in from (0,0)
 	while body.size() < snake_body.size():
 		var seg = create_body()
 		seg.is_active = true
+		var idx = body.size() - 1
+		var pos = snake_body[idx] if idx < snake_body.size() else snake_body[-1]
+		seg.teleport_to(pos.x, pos.y)
 
-	# Apply position and direction to each segment
 	for i in range(snake_body.size()):
 		var pos = snake_body[i]
 		var seg: Tile = body[i]
 		seg.is_active = true
 		seg.is_head = (i == 0)
 		seg.is_tail = (i == snake_body.size() - 1)
-
-		# Direction this segment is travelling
 		seg.direction = seg_dirs[i] if i < seg_dirs.size() else current_direction
-
-		# prev_direction = direction of the segment in front (used for tail rotation)
 		seg.prev_direction = seg_dirs[i - 1] if i > 0 and i - 1 < seg_dirs.size() else seg.direction
-
-		# next_direction = direction of the segment behind (used for corner body pieces)
 		seg.next_direction = seg_dirs[i + 1] if i + 1 < seg_dirs.size() else seg.direction
-
 		seg.move_to(pos.x, pos.y)
 		seg.refresh_texture()
 
