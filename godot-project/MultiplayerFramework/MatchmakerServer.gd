@@ -195,9 +195,9 @@ func _create_session(players: Array) -> Dictionary:
 		alive.append(true)
 		scores.append(0)
 
-	var food: Array[Vector2i] = []
+	var food = []
 	for i in range(4):
-		food.append(_rand_free_pos(snakes, food, rng))
+		food.append(_rand_free_pos(snakes, [], rng))
 
 	return {
 		"players": players,
@@ -210,6 +210,7 @@ func _create_session(players: Array) -> Dictionary:
 		"alive": alive,
 		"scores": scores,
 		"food": food,
+		"powerups": [],
 		"rng": rng,
 		"tick": 0,
 	}
@@ -241,6 +242,8 @@ func _tick_session(match_id: String, session: Dictionary):
 		if dir != -1 and not _is_180(session["directions"][i], dir):
 			session["directions"][i] = dir
 		session["inputs"][pid] = -1
+
+	# Magnet effect
 
 	# Move snakes — shift positions and per-segment directions together
 	for i in range(session["snakes"].size()):
@@ -289,9 +292,11 @@ func _tick_session(match_id: String, session: Dictionary):
 		if not session["alive"][i] or deaths.has(i):
 			continue
 		for fi in range(session["food"].size()):
-			if session["snakes"][i][0] == session["food"][fi]:
+			if session["snakes"][i][0] == session["food"][fi]["pos"]:
 				food_eaten[fi] = i
 				break
+
+	# Apply food effects
 
 	# Grow snake and relocate food
 	for fi in food_eaten.keys():
@@ -364,6 +369,18 @@ func _rand_free_pos(snakes: Array, food: Array, rng: RandomNumberGenerator) -> V
 		attempts += 1
 	print("[SERVER] WARNING: Could not find free food position")
 	return _floor_tiles[0]
+
+func _spawn_food_item(snakes: Array, food: Array, rng: RandomNumberGenerator) -> Dictionary:
+	var pos = _rand_free_pos(snakes, food, rng)
+	var roll = rng.randf()
+	var type: String
+	if roll < 0.90:
+		type = "apple"
+	elif roll < 0.95:
+		type = "golden"
+	else:
+		type = "magnet"
+	return {"pos": pos, "type": type}
 
 func _make_match_id(players: Array) -> String:
 	var sorted = players.duplicate()

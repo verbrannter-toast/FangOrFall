@@ -94,18 +94,21 @@ func apply_server_state(state: Dictionary):
 	_sync_food(food_positions)
 	$PlayerInput.set_committed_direction(directions[_player_number])
 
-func _sync_food(positions: Array):
-	while foods.size() < positions.size():
+func _sync_food(food_items: Array):
+	while foods.size() < food_items.size():
 		var tile = TileScene.instantiate()
 		add_child(tile)
 		tile.size = Vector2.ONE * tile_size
 		tile.tile_size = tile_size
 		tile.is_food = true
 		foods.append(tile)
-		tile.refresh_texture()
-	while foods.size() > positions.size():
+
+	while foods.size() > food_items.size():
 		foods[-1].queue_free()
 		foods.pop_back()
-	for i in range(positions.size()):
-		var pos = positions[i]
-		foods[i].teleport_to(pos.x, pos.y)
+
+	for i in range(food_items.size()):
+		var item = food_items[i]
+		foods[i].teleport_to(item["pos"].x, item["pos"].y)
+		foods[i].food_type = item["type"]
+		foods[i].refresh_texture()
