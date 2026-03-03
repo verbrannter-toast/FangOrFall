@@ -111,3 +111,5 @@ grow_vertical = 2
 layout_mode = 2
 text = "3"
 label_settings = SubResource("LabelSettings_x0lxx")
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="." unique_id=1496075605]

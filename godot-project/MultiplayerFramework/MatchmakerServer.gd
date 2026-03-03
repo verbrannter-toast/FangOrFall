@@ -380,6 +380,7 @@ func _broadcast_state(match_id: String, session: Dictionary):
 		"alive": session["alive"],
 		"scores": session["scores"],
 		"food": session["food"],
+		"powerups": session["powerups"],
 	}
 	for pid in session["players"]:
 		_send_to_peer(pid, msg)
