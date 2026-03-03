@@ -11,6 +11,9 @@ var _relay_client: ClientManager
 var _player_number: int
 var _players_alive: int
 
+var _pending_food_state: Array = []
+var _has_pending_food: bool = false
+
 var _prev_food: Array = []
 
 var foods = []
@@ -66,32 +69,36 @@ func apply_server_state(state: Dictionary):
 	var directions = state["directions"]
 	var alive = state["alive"]
 	var scores = state["scores"]
-	var food_positions = state["food"]
+	var food_items = state["food"]
 
 	player_scores = scores.duplicate()
 	$HUD.update(player_scores)
 
-	# Detect food eaten — any position that changed means a food was consumed
-	if _prev_food.size() == food_positions.size():
-		for i in range(food_positions.size()):
-			if _prev_food[i] != food_positions[i]:
+	# Apply food from previous tick — gives tween one full tick (200ms) to animate
+	if _has_pending_food:
+		_sync_food(_pending_food_state)
+	_pending_food_state = food_items.duplicate(true)
+	_has_pending_food = true
+
+	# Detect food eaten by comparing pending (what we're about to show) 
+	# against the new incoming state
+	if _pending_food_state.size() == food_items.size():
+		for i in range(food_items.size()):
+			if _pending_food_state[i]["pos"] != food_items[i]["pos"]:
 				$EatApple.play()
-				break  # one sound even if two eaten simultaneously
-	_prev_food = food_positions.duplicate()
+				break
 
 	for i in range(players.size()):
 		if not alive[i] and not players_dead[i]:
 			players_dead[i] = true
 			_players_alive -= 1
 			players[i].kill()
-			# Stop music as soon as someone dies
 			$GameMusic.stop()
 			continue
 		if not alive[i]:
 			continue
 		players[i].apply_state(snakes[i], snake_dirs[i])
 
-	_sync_food(food_positions)
 	$PlayerInput.set_committed_direction(directions[_player_number])
 
 func _sync_food(food_items: Array):
