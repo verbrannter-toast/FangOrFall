@@ -83,63 +83,39 @@ func _return_to_menu():
 	print("[CLEANUP] Cleanup complete!")
 
 func _on_message(message: Message):
-	if message.server_login:
-		return
-	if message.match_start:
+	# ignore non-dict
+	if not (message.content is Dictionary):
 		return
 
-	if message.content is Dictionary:
-		if message.content.has("ping"):
-			var rtt = Time.get_ticks_msec() - int(message.content.get("t", _ping_send_time))
-			_last_ping_ms = rtt
-			print("[PING] %d ms" % rtt)
-			return
+	# Echo ping stays (but ideally add sender id / nonce)
+	if message.content.has("ping"):
+		var rtt = Time.get_ticks_msec() - int(message.content.get("t", 0))
+		_last_ping_ms = rtt
+		print("[PING] %d ms" % rtt)
+		return
 
-		if message.content.has("countdown"):
-			var count = message.content["countdown"]
-			if count == 0:
+	if message.content.has("countdown"):
+		var count = message.content["countdown"]
+		if _game != null and is_instance_valid(_game):
+			if int(count) == 0:
 				_game.get_node("HUD").countdown("GO!")
 				_game.get_node("GameMusic").play()
 			else:
 				_game.get_node("HUD").countdown(str(count))
-			return
-
-		if message.content.has("server_tick"):
-			process_server_tick(message)
-			return
-
-		if message.content.has("gameover"):
-			print("[CLIENT] Received gameover signal")
-			var winner = message.content.get("winner", -1)
-			if _game != null and is_instance_valid(_game):
-				_on_game_over(winner, _game.player_scores)
-			return
-
-		if message.content.has("seed"):
-			process_seed_message(message)
-			return
-
-# Called every time the server broadcasts a tick with the collected inputs
-func process_server_tick(message: Message):
-	if _game == null or not is_instance_valid(_game):
 		return
 
-	var inputs = message.content.get("inputs", {})
+	# NEW: authoritative state
+	if message.content.has("state"):
+		if _game != null and is_instance_valid(_game):
+			_game.apply_authoritative_state(message.content)
+		return
 
-	for pid_str in inputs.keys():
-		var pid = int(pid_str)
-		var dir = int(inputs[pid_str])
-		if dir == -1:
-			continue
-		var player_number = _relay_client._match.find(pid)
-		if player_number != -1:
-			_game._set_direction(player_number, dir)
-
-	_game.tick()
-
-	var my_player = _game.players[_relay_client._player_number]
-	if my_player != null and is_instance_valid(my_player):
-		_game.get_node("PlayerInput").set_committed_direction(my_player.current_direction)
+	# NEW: authoritative gameover
+	if message.content.has("gameover"):
+		var winner = int(message.content.get("winner", -1))
+		var scores = message.content.get("scores", [])
+		_on_game_over(winner, scores)
+		return
 
 func process_match_start():
 	print("=== STARTING GAME SETUP ===")
@@ -166,19 +142,3 @@ func process_match_start():
 	print("  My Player Number: ", my_player_number)
 
 	_game.setup(my_player_number, _relay_client)
-
-func process_seed_message(message: Message):
-	if _game == null:
-		print("ERROR: Received seed but game not initialized!")
-		return
-
-	print("Received seed from server: ", message.content["seed"])
-	seed(message.content["seed"])
-
-	# All clients spawn food identically using the same server-provided seed
-	if _game.foods.size() == 0:
-		print("Spawning initial food with server seed")
-		for i in range(4):
-			_game.spawn_food_tile_at_random()
-	else:
-		print("Food already spawned")

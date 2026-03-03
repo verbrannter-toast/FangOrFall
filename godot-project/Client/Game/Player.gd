@@ -11,6 +11,7 @@ var current_direction: int = 1
 var _tile_size: int
 var _player: int  # real player number (0 or 1)
 var _spawn_position: Vector2i
+var _authorative_dead := false
 
 func _ready():
 	add_to_group("players")
@@ -167,6 +168,71 @@ func grow():
 
 func tick():
 	move_to_direction()
+
+var _authoritative_dead := false
+
+func set_alive_authoritative(alive: bool) -> void:
+	_authoritative_dead = not alive
+	if _authoritative_dead:
+		# Optional: visually grey out, stop sounds, etc.
+		pass
+
+# body_arr is like [[x,y],[x,y],...]
+func apply_authoritative_body(body_arr: Array) -> void:
+	if _authoritative_dead:
+		return
+
+	# Ensure body length
+	while body.size() < body_arr.size():
+		var seg = create_body()
+		body.append(seg)
+	while body.size() > body_arr.size():
+		var seg = body.pop_back()
+		if seg and is_instance_valid(seg):
+			seg.queue_free()
+
+	# Apply positions
+	for i in range(body_arr.size()):
+		var xy: Array = body_arr[i]
+		body[i].teleport_to(int(xy[0]), int(xy[1]))
+
+	# Apply head/tail flags
+	for i in range(body.size()):
+		var tile = body[i]
+		tile.is_head = (i == 0)
+		tile.is_tail = (i == body.size() - 1)
+		tile.is_active = true
+
+	# Update directions for textures (best-effort)
+	for i in range(body.size() - 1):
+		var a: Vector2i = Vector2i(body[i].tile_x, body[i].tile_y)
+		var b: Vector2i = Vector2i(body[i+1].tile_x, body[i+1].tile_y)
+		var d: Vector2i = a - b
+		body[i].direction = _dir_from_delta(d)
+		body[i].prev_direction = body[i].direction
+
+	# Tail direction
+	if body.size() >= 2:
+		var t0: Vector2i = Vector2i(body[body.size()-2].tile_x, body[body.size()-2].tile_y)
+		var t1: Vector2i = Vector2i(body[body.size()-1].tile_x, body[body.size()-1].tile_y)
+		var td: Vector2i = t0 - t1
+		body[body.size()-1].direction = _dir_from_delta(td)
+		body[body.size()-1].prev_direction = body[body.size()-1].direction
+
+	# Refresh textures
+	for tile in body:
+		tile.refresh_texture()
+
+func _dir_from_delta(d: Vector2i) -> int:
+	if d == Vector2i(0, -1):
+		return 0
+	if d == Vector2i(1, 0):
+		return 1
+	if d == Vector2i(0, 1):
+		return 2
+	if d == Vector2i(-1, 0):
+		return 3
+	return current_direction
 
 func kill():
 	for tile in body:
