@@ -258,9 +258,9 @@ func _tick_session(match_id: String, session: Dictionary):
 				# Move one step closer on whichever axis is larger
 				var step = Vector2i.ZERO
 				if abs(diff.x) >= abs(diff.y):
-					step.x = -1 if diff.x > 0 else (1 if diff.x < 0 else 0)
+					step.x = -2 if diff.x > 0 else (2 if diff.x < 0 else 0)
 				else:
-					step.y = -1 if diff.y > 0 else (1 if diff.y < 0 else 0)
+					step.y = -2 if diff.y > 0 else (2 if diff.y < 0 else 0)
 				var new_pos = food_pos + step
 				# Only move if not into a wall or another food
 				if not _walls.has(new_pos):
