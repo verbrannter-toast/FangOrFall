@@ -168,35 +168,34 @@ func grow():
 func tick():
 	move_to_direction()
 
-func apply_state(snake_body: Array, direction: int):
-	current_direction = direction
+# Add/replace in Player.gd — apply_state now receives per-segment directions
+func apply_state(snake_body: Array, seg_dirs: Array):
+	current_direction = seg_dirs[0] if seg_dirs.size() > 0 else current_direction
 
-	# Grow or shrink body to match server length
+	# Grow body to match server length
 	while body.size() < snake_body.size():
 		var seg = create_body()
 		seg.is_active = true
 
-	# Move each tile to the server position
+	# Apply position and direction to each segment
 	for i in range(snake_body.size()):
 		var pos = snake_body[i]
-		if i == 0:
-			body[i].is_head = true
-			body[i].is_tail = false
-			body[i].direction = direction
-			body[i].move_to(pos.x, pos.y)
-		elif i == snake_body.size() - 1:
-			body[i].is_head = false
-			body[i].is_tail = true
-			body[i].is_active = true
-			body[i].move_to(pos.x, pos.y)
-		else:
-			body[i].is_head = false
-			body[i].is_tail = false
-			body[i].is_active = true
-			body[i].move_to(pos.x, pos.y)
+		var seg: Tile = body[i]
+		seg.is_active = true
+		seg.is_head = (i == 0)
+		seg.is_tail = (i == snake_body.size() - 1)
 
-	for tile in body:
-		tile.refresh_texture()
+		# Direction this segment is travelling
+		seg.direction = seg_dirs[i] if i < seg_dirs.size() else current_direction
+
+		# prev_direction = direction of the segment in front (used for tail rotation)
+		seg.prev_direction = seg_dirs[i - 1] if i > 0 and i - 1 < seg_dirs.size() else seg.direction
+
+		# next_direction = direction of the segment behind (used for corner body pieces)
+		seg.next_direction = seg_dirs[i + 1] if i + 1 < seg_dirs.size() else seg.direction
+
+		seg.move_to(pos.x, pos.y)
+		seg.refresh_texture()
 
 func _dir_from_delta(d: Vector2i) -> int:
 	if d == Vector2i(0, -1):
