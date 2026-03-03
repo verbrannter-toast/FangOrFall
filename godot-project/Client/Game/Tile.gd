@@ -10,12 +10,17 @@ class_name Tile
 @export var tail_textures: Array[Texture2D] = []  # [Player0, Player1, Player2, Player3]
 
 @export var wall_texture: Texture2D
+
+# food and powerups
 @export var food_texture: Texture2D
+@export var golden_food_texture: Texture2D
+@export var magnet_food_texture: Texture2D
 
 var is_head: bool = false
 var is_tail: bool = false
 var player: int = -1
 var is_food: bool = false
+var food_type: String = "apple"
 var is_active: bool = false
 
 # directions for future rotation (optional)
@@ -38,7 +43,13 @@ func _setup_pivot():
 func refresh_texture():
 	
 	if is_food:
-		texture = food_texture
+		match food_type:
+			"golden":
+				texture = golden_food_texture
+			"magnet":
+				texture = magnet_food_texture
+			_:
+				texture = food_texture
 		modulate = Color.WHITE
 		rotation = 0
 		return
