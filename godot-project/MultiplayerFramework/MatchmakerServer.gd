@@ -197,7 +197,7 @@ func _create_session(players: Array) -> Dictionary:
 
 	var food = []
 	for i in range(4):
-		food.append(_rand_free_pos(snakes, [], rng))
+		food.append(_spawn_food_item(snakes, [], rng))
 
 	return {
 		"players": players,
