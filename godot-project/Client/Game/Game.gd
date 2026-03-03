@@ -93,6 +93,17 @@ func apply_server_state(state: Dictionary):
 
 	_sync_food(food_positions)
 	$PlayerInput.set_committed_direction(directions[_player_number])
+	
+	var powerups = state.get("powerups", [])
+	for i in range(players.size()):
+		if not alive[i]:
+			continue
+		var has_magnet = false
+		for pw in powerups:
+			if pw["player"] == i and pw["type"] == "magnet":
+				has_magnet = true
+				break
+		players[i].set_magnet_active(has_magnet)
 
 func _sync_food(food_items: Array):
 	while foods.size() < food_items.size():

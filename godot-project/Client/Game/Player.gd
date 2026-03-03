@@ -12,6 +12,8 @@ var _tile_size: int
 var _player: int  # real player number (0 or 1)
 var _spawn_position: Vector2i
 
+var _magnet_particles: CPUParticles2D = null
+
 func _ready():
 	add_to_group("players")
 
@@ -58,6 +60,8 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 	# refresh all textures
 	for tile in body:
 		tile.refresh_texture()
+	
+	_setup_magnet_particles(tile_size)
 
 func _find_spawn_point() -> SpawnPoint:
 	# search for spawn point as child
@@ -167,6 +171,13 @@ func grow():
 
 func tick():
 	move_to_direction()
+	# Keep particles centered on head as snake moves
+	if _magnet_particles != null and _magnet_particles.emitting and body.size() > 0:
+		var head = body[0]
+		_magnet_particles.position = Vector2(
+			head.tile_x * _tile_size + _tile_size * 0.5,
+			head.tile_y * _tile_size + _tile_size * 0.5
+		)
 
 # Add/replace in Player.gd — apply_state now receives per-segment directions
 func apply_state(snake_body: Array, seg_dirs: Array):
@@ -208,3 +219,54 @@ func kill():
 	for tile in body:
 		tile.queue_free()
 	queue_free()
+
+func _setup_magnet_particles(tile_size: int):
+	_magnet_particles = CPUParticles2D.new()
+	add_child(_magnet_particles)
+	
+	_magnet_particles.emitting = false
+	_magnet_particles.amount = 16
+	_magnet_particles.lifetime = 0.6
+	_magnet_particles.explosiveness = 0.0
+	_magnet_particles.randomness = 0.5
+	
+	# Emit from a ring around the head — radius matches the 3-tile pull range
+	_magnet_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	_magnet_particles.emission_sphere_radius = tile_size * 3.5
+	
+	# Particles move inward toward center (the head)
+	_magnet_particles.direction = Vector2(0, 0)
+	_magnet_particles.gravity = Vector2.ZERO
+	_magnet_particles.initial_velocity_min = tile_size * 2.0
+	_magnet_particles.initial_velocity_max = tile_size * 3.0
+	
+	# Aim toward center using negative spread with radial accel
+	_magnet_particles.spread = 0.0
+	_magnet_particles.radial_accel_min = -tile_size * 20.0
+	_magnet_particles.radial_accel_max = -tile_size * 25.0
+	
+	# Small sparks
+	_magnet_particles.scale_amount_min = 0.15
+	_magnet_particles.scale_amount_max = 0.35
+	
+	# Color — golden/white sparks
+	_magnet_particles.color = Color(1.0, 0.9, 0.3, 1.0)
+	var gradient = Gradient.new()
+	gradient.add_point(0.0, Color(1.0, 0.9, 0.3, 1.0))
+	gradient.add_point(1.0, Color(1.0, 1.0, 1.0, 0.0))
+	_magnet_particles.color_ramp = gradient
+
+func set_magnet_active(active: bool):
+	if _magnet_particles == null:
+		return
+	if active and not _magnet_particles.emitting:
+		# Position particles at the head tile
+		if body.size() > 0:
+			var head = body[0]
+			_magnet_particles.position = Vector2(
+				head.tile_x * _tile_size + _tile_size * 0.5,
+				head.tile_y * _tile_size + _tile_size * 0.5
+			)
+		_magnet_particles.emitting = true
+	elif not active:
+		_magnet_particles.emitting = false
