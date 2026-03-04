@@ -11,6 +11,7 @@
 [ext_resource type="AudioStream" uid="uid://cpgk5th58253w" path="res://Client/Assets/Sounds/AppleEaten.mp3" id="9_ohk6n"]
 [ext_resource type="Script" uid="uid://begaa6bkgfwy5" path="res://Client/Game/hud.gd" id="10_n8sgs"]
 [ext_resource type="FontFile" uid="uid://1ltenkggr2qn" path="res://Client/Assets/Cave-Story.ttf" id="11_w4wa0"]
+[ext_resource type="Texture2D" uid="uid://c3pm86cm5jrmd" path="res://Client/Assets/Tiles/FoodMagnet.svg" id="12_w4wa0"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_n8sgs"]
 font_size = 30
@@ -111,3 +112,7 @@ grow_vertical = 2
 layout_mode = 2
 text = "3"
 label_settings = SubResource("LabelSettings_x0lxx")
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="." unique_id=1496075605]
+amount = 10
+texture = ExtResource("12_w4wa0")

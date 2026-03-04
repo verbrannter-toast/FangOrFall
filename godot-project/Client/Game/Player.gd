@@ -12,6 +12,8 @@ var _tile_size: int
 var _player: int  # real player number (0 or 1)
 var _spawn_position: Vector2i
 
+@onready var _magnet_particles: CPUParticles2D = $"../CPUParticles2D"
+
 func _ready():
 	add_to_group("players")
 
@@ -58,6 +60,8 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 	# refresh all textures
 	for tile in body:
 		tile.refresh_texture()
+	
+	_setup_magnet_particles(tile_size)
 
 func _find_spawn_point() -> SpawnPoint:
 	# search for spawn point as child
@@ -167,6 +171,13 @@ func grow():
 
 func tick():
 	move_to_direction()
+	# Keep particles centered on head as snake moves
+	if _magnet_particles != null and _magnet_particles.emitting and body.size() > 0:
+		var head = body[0]
+		_magnet_particles.position = Vector2(
+			head.tile_x * _tile_size + _tile_size * 0.5,
+			head.tile_y * _tile_size + _tile_size * 0.5
+		)
 
 # Add/replace in Player.gd — apply_state now receives per-segment directions
 func apply_state(snake_body: Array, seg_dirs: Array):
@@ -208,3 +219,47 @@ func kill():
 	for tile in body:
 		tile.queue_free()
 	queue_free()
+
+func _setup_magnet_particles(tile_size: int):
+	_magnet_particles.emitting = false
+	_magnet_particles.amount = 16
+	_magnet_particles.lifetime = 0.6
+	_magnet_particles.explosiveness = 0.0
+	_magnet_particles.randomness = 0.5
+	_magnet_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	_magnet_particles.emission_sphere_radius = tile_size * 5.5
+	_magnet_particles.direction = Vector2(0, 0)
+	_magnet_particles.gravity = Vector2.ZERO
+	_magnet_particles.initial_velocity_min = tile_size * 2.0
+	_magnet_particles.initial_velocity_max = tile_size * 3.0
+	_magnet_particles.spread = 0.0
+	_magnet_particles.radial_accel_min = -tile_size * 20.0
+	_magnet_particles.radial_accel_max = -tile_size * 25.0
+	_magnet_particles.scale_amount_min = 4
+	_magnet_particles.scale_amount_max = 4
+	_magnet_particles.color = Color(0.261, 0.353, 0.602, 1.0)
+	var gradient = Gradient.new()
+	gradient.add_point(0.0, Color(0.549, 0.763, 1.0, 1.0))
+	gradient.add_point(1.0, Color(1.0, 1.0, 1.0, 0.0))
+	_magnet_particles.color_ramp = gradient
+
+func set_magnet_active(active: bool):
+	if body.is_empty():
+		return
+	var head = body[0]
+	
+	if active:
+		# If particles don't exist yet or are on the wrong tile, (re)attach to head
+		if _magnet_particles == null or _magnet_particles.get_parent() != head:
+			if _magnet_particles != null:
+				_magnet_particles.queue_free()
+			_magnet_particles = CPUParticles2D.new()
+			head.add_child(_magnet_particles)
+			_setup_magnet_particles(_tile_size)
+			# Center within the tile
+			_magnet_particles.position = Vector2(_tile_size * 0.5, _tile_size * 0.5)
+		_magnet_particles.emitting = true
+
+	else:
+		if _magnet_particles != null:
+			_magnet_particles.emitting = false

@@ -10,6 +10,8 @@
 [ext_resource type="Texture2D" uid="uid://cbyynsukaoqdr" path="res://Client/Assets/Tiles/SnakeFood.svg" id="8_o2vq7"]
 [ext_resource type="Texture2D" uid="uid://bqys66w7g1s3g" path="res://Client/Assets/Tiles/SnakeTail-Red.svg" id="8_ow0ht"]
 [ext_resource type="Texture2D" uid="uid://cv172632bs14h" path="res://Client/Assets/Tiles/Wall.svg" id="9_xw21i"]
+[ext_resource type="Texture2D" uid="uid://cqvkie81n3gkn" path="res://Client/Assets/Tiles/GoldenSnakeFood.svg" id="11_iyxmr"]
+[ext_resource type="Texture2D" uid="uid://c3pm86cm5jrmd" path="res://Client/Assets/Tiles/FoodMagnet.svg" id="12_cdd4g"]
 
 [node name="Tile" type="TextureRect" unique_id=908811636]
 texture = ExtResource("1")
@@ -20,3 +22,5 @@ body_textures = Array[Texture2D]([ExtResource("5_iyxmr"), ExtResource("6_cdd4g")
 tail_textures = Array[Texture2D]([ExtResource("7_hiy2x"), ExtResource("8_ow0ht")])
 wall_texture = ExtResource("9_xw21i")
 food_texture = ExtResource("8_o2vq7")
+golden_food_texture = ExtResource("11_iyxmr")
+magnet_food_texture = ExtResource("12_cdd4g")
