@@ -7,6 +7,21 @@
 [ext_resource type="TileSet" uid="uid://wcaqxbkaroar" path="res://Client/Assets/Tiles/TileSet-BlueBricks.tres" id="4_2j7je"]
 [ext_resource type="Script" uid="uid://dubryb1qg4i50" path="res://Client/Game/Camera.gd" id="5_6j0wy"]
 [ext_resource type="TileSet" uid="uid://dfnwlayaq4on4" path="res://Client/Assets/Tiles/TileSet-Floor.tres" id="6_plr42"]
+[ext_resource type="AudioStream" uid="uid://c4aujwvs72g8t" path="res://Client/Assets/Sounds/Soundtrack.wav" id="8_jupb3"]
+[ext_resource type="AudioStream" uid="uid://cpgk5th58253w" path="res://Client/Assets/Sounds/AppleEaten.mp3" id="9_ohk6n"]
+[ext_resource type="Script" uid="uid://begaa6bkgfwy5" path="res://Client/Game/hud.gd" id="10_n8sgs"]
+[ext_resource type="FontFile" uid="uid://1ltenkggr2qn" path="res://Client/Assets/Cave-Story.ttf" id="11_w4wa0"]
+[ext_resource type="Texture2D" uid="uid://c3pm86cm5jrmd" path="res://Client/Assets/Tiles/FoodMagnet.svg" id="12_w4wa0"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_n8sgs"]
+font_size = 30
+
+[sub_resource type="LabelSettings" id="LabelSettings_w4wa0"]
+font_size = 30
+
+[sub_resource type="LabelSettings" id="LabelSettings_x0lxx"]
+font = ExtResource("11_w4wa0")
+font_size = 200
 
 [node name="GridMap" type="Control" unique_id=1253301198]
 layout_mode = 3
@@ -52,3 +67,52 @@ layer_0/tile_data = PackedInt32Array(524296, 0, 0, 589833, 0, 0, 655370, 65536, 
 position = Vector2(296, 280)
 script = ExtResource("5_6j0wy")
 zoom_level = 2.0
+
+[node name="GameMusic" type="AudioStreamPlayer" parent="." unique_id=1995684860]
+stream = ExtResource("8_jupb3")
+
+[node name="EatApple" type="AudioStreamPlayer" parent="." unique_id=1912420483]
+stream = ExtResource("9_ohk6n")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=833107523]
+script = ExtResource("10_n8sgs")
+
+[node name="MyPanel" type="PanelContainer" parent="HUD" unique_id=1242636225]
+offset_top = 4.0
+offset_right = 170.0
+offset_bottom = 30.0
+
+[node name="Label" type="Label" parent="HUD/MyPanel" unique_id=613183331]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("11_w4wa0")
+text = " My Score:"
+label_settings = SubResource("LabelSettings_n8sgs")
+vertical_alignment = 1
+
+[node name="OppPanel" type="PanelContainer" parent="HUD" unique_id=2065072465]
+offset_top = 33.0
+offset_right = 170.0
+offset_bottom = 59.0
+
+[node name="Label" type="Label" parent="HUD/OppPanel" unique_id=266970765]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("11_w4wa0")
+text = " Opp Score:"
+label_settings = SubResource("LabelSettings_w4wa0")
+vertical_alignment = 1
+
+[node name="CountdownContainer" type="CenterContainer" parent="HUD" unique_id=979914720]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CountdownLabel" type="Label" parent="HUD/CountdownContainer" unique_id=960608870]
+layout_mode = 2
+text = "3"
+label_settings = SubResource("LabelSettings_x0lxx")
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="." unique_id=1496075605]
+amount = 10
+texture = ExtResource("12_w4wa0")

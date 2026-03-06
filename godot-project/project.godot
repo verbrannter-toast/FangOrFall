@@ -20,7 +20,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Snake Versus"
+config/name="FangOrFall"
 run/main_scene="uid://da2pn8pbtx4d2"
 config/features=PackedStringArray("4.6")
 

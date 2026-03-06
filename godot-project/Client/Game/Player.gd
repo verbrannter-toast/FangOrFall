@@ -9,8 +9,10 @@ var body = []
 var current_direction: int = 1
 
 var _tile_size: int
-var _player: int  # Die echte Player-Nummer (0 oder 1)
+var _player: int  # real player number (0 or 1)
 var _spawn_position: Vector2i
+
+@onready var _magnet_particles: CPUParticles2D = $"../CPUParticles2D"
 
 func _ready():
 	add_to_group("players")
@@ -25,24 +27,24 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 		_spawn_position = spawn_point.get_grid_position(tile_size)
 		print("[PLAYER ", _player, "] Spawning at: ", _spawn_position, " (from SpawnPoint)")
 	else:
-		# Fallback: Default-Positionen
+		# Fallback: default positions
 		_spawn_position = Vector2i(5, 5) if player_num == 0 else Vector2i(25, 25)
 		print("[PLAYER ", _player, "] WARNING: No SpawnPoint found! Using fallback: ", _spawn_position)
 	
-	# Startrichtung basierend auf Spieler
+	# start direction based on player
 	if player_num == 0:
 		current_direction = 1  # RIGHT
 	else:
 		current_direction = 3  # LEFT
 	
-	# Kopf
+	# head
 	var head = create_body()
 	head.is_active = true
 	head.is_head = true
 	head.direction = current_direction
 	head.teleport_to(_spawn_position.x, _spawn_position.y)
 	
-	# 2 Startkörper-Segmente
+	# 2 starting body segments
 	for i in range(2):
 		var segment = create_body()
 		segment.is_active = true
@@ -52,15 +54,17 @@ func setup(tile_size: int, player_num: int, _sprite_idx: int):
 		segment.prev_direction = current_direction
 		segment.next_direction = current_direction
 	
-	# Letztes Segment ist Schwanz
+	# last segment is tail
 	body[-1].is_tail = true
 	
-	# Refresh alle Texturen
+	# refresh all textures
 	for tile in body:
 		tile.refresh_texture()
+	
+	_setup_magnet_particles(tile_size)
 
 func _find_spawn_point() -> SpawnPoint:
-	# Suche nach SpawnPoint als Child
+	# search for spawn point as child
 	for child in get_children():
 		if child is SpawnPoint:
 			return child
@@ -97,7 +101,7 @@ func move_to_direction():
 	var head: Tile = body[0]
 	var movement = DIRECTIONS[current_direction]
 	
-	# Speichere alte Positionen und Richtungen
+	# save old positions and directions
 	var positions = []
 	var directions = []
 	
@@ -106,17 +110,17 @@ func move_to_direction():
 		positions.append(Vector2(body[i].tile_x, body[i].tile_y))
 		directions.append(body[i].direction)
 	
-	# Bewege Kopf
+	# move head
 	head.direction = current_direction
 	head.move_to(head.tile_x + movement.x, head.tile_y + movement.y)
 	
 	
-	# Bewege Rest der Schlange
+	# move rest of snake
 	for i in range(1, body.size()):
 		if body[i].is_active:
 			body[i].move_to(positions[i-1].x, positions[i-1].y)
 			
-			# Update Richtungen für Körpersegmente
+			# update direction of all segments
 			body[i].prev_direction = directions[i-1]
 			if i < body.size() - 1:
 				body[i].next_direction = get_direction_to(positions[i], positions[i+1])
@@ -128,7 +132,7 @@ func move_to_direction():
 			body[i].is_active = true
 			body[i].teleport_to(positions[i-1].x, positions[i-1].y)
 	
-	# Refresh Texturen
+	# refresh textures
 	for tile in body:
 		tile.refresh_texture()
 
@@ -140,14 +144,14 @@ func get_direction_to(from: Vector2, to: Vector2) -> int:
 		return 1 if diff.x > 0 else 3
 
 func grow():
-	# Erstelle neues Segment
+	# create new segment
 	var new_segment = create_body()
 	
 	if body.size() > 1:
 		var old_tail_idx = body.size() - 2
 		var old_tail = body[old_tail_idx]
 		
-		# Flags explizit setzen
+		# place flags explicitly
 		old_tail.is_tail = false
 		old_tail.is_head = false
 		
@@ -155,7 +159,7 @@ func grow():
 		new_segment.is_head = false
 		new_segment.is_active = false
 		
-		# Position vom vorletzten Segment
+		# position of next to last segment
 		var ref_tile = body[old_tail_idx]
 		new_segment.teleport_to(ref_tile.tile_x, ref_tile.tile_y)
 		new_segment.prev_direction = ref_tile.direction
@@ -167,8 +171,95 @@ func grow():
 
 func tick():
 	move_to_direction()
+	# Keep particles centered on head as snake moves
+	if _magnet_particles != null and _magnet_particles.emitting and body.size() > 0:
+		var head = body[0]
+		_magnet_particles.position = Vector2(
+			head.tile_x * _tile_size + _tile_size * 0.5,
+			head.tile_y * _tile_size + _tile_size * 0.5
+		)
+
+# Add/replace in Player.gd — apply_state now receives per-segment directions
+func apply_state(snake_body: Array, seg_dirs: Array):
+	current_direction = seg_dirs[0] if seg_dirs.size() > 0 else current_direction
+
+	# Grow body to match server length — teleport new segments into position
+	# immediately so they don't fly in from (0,0)
+	while body.size() < snake_body.size():
+		var seg = create_body()
+		seg.is_active = true
+		var idx = body.size() - 1
+		var pos = snake_body[idx] if idx < snake_body.size() else snake_body[-1]
+		seg.teleport_to(pos.x, pos.y)
+
+	for i in range(snake_body.size()):
+		var pos = snake_body[i]
+		var seg: Tile = body[i]
+		seg.is_active = true
+		seg.is_head = (i == 0)
+		seg.is_tail = (i == snake_body.size() - 1)
+		seg.direction = seg_dirs[i] if i < seg_dirs.size() else current_direction
+		seg.prev_direction = seg_dirs[i - 1] if i > 0 and i - 1 < seg_dirs.size() else seg.direction
+		seg.next_direction = seg_dirs[i + 1] if i + 1 < seg_dirs.size() else seg.direction
+		seg.move_to(pos.x, pos.y)
+		seg.refresh_texture()
+
+func _dir_from_delta(d: Vector2i) -> int:
+	if d == Vector2i(0, -1):
+		return 0
+	if d == Vector2i(1, 0):
+		return 1
+	if d == Vector2i(0, 1):
+		return 2
+	if d == Vector2i(-1, 0):
+		return 3
+	return current_direction
 
 func kill():
 	for tile in body:
 		tile.queue_free()
 	queue_free()
+
+func _setup_magnet_particles(tile_size: int):
+	_magnet_particles.emitting = false
+	_magnet_particles.amount = 16
+	_magnet_particles.lifetime = 0.6
+	_magnet_particles.explosiveness = 0.0
+	_magnet_particles.randomness = 0.5
+	_magnet_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	_magnet_particles.emission_sphere_radius = tile_size * 5.5
+	_magnet_particles.direction = Vector2(0, 0)
+	_magnet_particles.gravity = Vector2.ZERO
+	_magnet_particles.initial_velocity_min = tile_size * 2.0
+	_magnet_particles.initial_velocity_max = tile_size * 3.0
+	_magnet_particles.spread = 0.0
+	_magnet_particles.radial_accel_min = -tile_size * 20.0
+	_magnet_particles.radial_accel_max = -tile_size * 25.0
+	_magnet_particles.scale_amount_min = 4
+	_magnet_particles.scale_amount_max = 4
+	_magnet_particles.color = Color(0.261, 0.353, 0.602, 1.0)
+	var gradient = Gradient.new()
+	gradient.add_point(0.0, Color(0.549, 0.763, 1.0, 1.0))
+	gradient.add_point(1.0, Color(1.0, 1.0, 1.0, 0.0))
+	_magnet_particles.color_ramp = gradient
+
+func set_magnet_active(active: bool):
+	if body.is_empty():
+		return
+	var head = body[0]
+	
+	if active:
+		# If particles don't exist yet or are on the wrong tile, (re)attach to head
+		if _magnet_particles == null or _magnet_particles.get_parent() != head:
+			if _magnet_particles != null:
+				_magnet_particles.queue_free()
+			_magnet_particles = CPUParticles2D.new()
+			head.add_child(_magnet_particles)
+			_setup_magnet_particles(_tile_size)
+			# Center within the tile
+			_magnet_particles.position = Vector2(_tile_size * 0.5, _tile_size * 0.5)
+		_magnet_particles.emitting = true
+
+	else:
+		if _magnet_particles != null:
+			_magnet_particles.emitting = false

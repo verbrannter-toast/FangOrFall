@@ -18,18 +18,20 @@ func setup(winner_player: int, my_player_number: int, player_scores: Array):
 	
 	print("[GAMEOVER] Setup called - Winner:", winner, " MyPlayer:", my_player)
 	
-	# Winner Text
+	# winner Text
 	if winner == -1:
 		winner_label.text = "DRAW!"
 		winner_label.add_theme_color_override("font_color", Color.YELLOW)
 	elif winner == my_player:
+		$GameOverWinner.play()
 		winner_label.text = "YOU WIN!"
 		winner_label.add_theme_color_override("font_color", Color.GREEN)
 	else:
+		$GameOverLoser.play()
 		winner_label.text = "YOU LOSE!"
 		winner_label.add_theme_color_override("font_color", Color.RED)
 	
-	# Scores
+	# scores
 	if player1_score != null and scores.size() >= 1:
 		player1_score.text = "Player 1: " + str(scores[0]) + " points"
 	if player2_score != null and scores.size() >= 2:
@@ -49,7 +51,7 @@ func start_countdown(seconds: int):
 	emit_signal("return_to_menu")
 
 func _input(event):
-	# Allow skipping with Space/Enter
+	# allow skipping with Space/Enter
 	if event is InputEventKey and event.is_pressed():
 		if event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
 			emit_signal("return_to_menu")

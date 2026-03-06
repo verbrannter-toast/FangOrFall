@@ -2,7 +2,7 @@ extends Node
 
 class_name ClientManager
 
-@export var websocket_url: String = "fangorfall.duckdns.org"
+@export var websocket_url: String = "game.fangorfall.win"
 @export var port: int = 443
 
 var _match = []
@@ -37,35 +37,35 @@ func send_data(message: Message):
 		emit_signal("on_message", message)
 
 func connect_to_server():
-	# Clean the URL
+	# clean the URL
 	var clean_url = websocket_url.strip_edges()
 	clean_url = clean_url.replace("https://", "")
 	clean_url = clean_url.replace("http://", "")
 	clean_url = clean_url.replace("ws://", "")
 	clean_url = clean_url.replace("wss://", "")
 	
-	# Remove port from URL if present
+	# remove port from URL if present
 	if ":" in clean_url:
 		var parts = clean_url.split(":")
 		clean_url = parts[0]
-		# Optionally extract port from URL
+		# optionally extract port from URL
 		if parts.size() > 1:
 			var url_port = parts[1].to_int()
 			if url_port > 0:
 				port = url_port
 	
-	# Remove trailing slash
+	# remove trailing slash
 	clean_url = clean_url.trim_suffix("/")
 	
-	# Determine if this is a secure connection (ngrok, production)
+	# determine if this is a secure connection
 	var is_secure = not (clean_url == "localhost" or clean_url.begins_with("127.0.0.1") or clean_url.begins_with("192.168.") or clean_url.begins_with("10."))
 	
-	# Build WebSocket URI
+	# build WebSocket URI
 	if is_secure:
-		# ngrok or production - use WSS on port 443 (default, no need to specify)
+		# use WSS on port 443 (default, no need to specify)
 		uri = "wss://" + clean_url
 	else:
-		# Local development - use WS with specified port
+		# use WS with specified port
 		uri = "ws://" + clean_url + ":" + str(port)
 	
 	print("Connecting to: ", uri)
@@ -98,11 +98,10 @@ func disconnect_from_server():
 	set_process(false)
 
 func _process(_delta):
-	# Guard: Früher Exit wenn nicht verbunden oder Client null
 	if not _is_connected and _client == null:
 		return
 	
-	# Try-Catch Pattern mit frühen Returns
+	# Try-Catch Pattern with early returns
 	if _client == null:
 		_is_connected = false
 		set_process(false)
@@ -114,30 +113,26 @@ func _process(_delta):
 		set_process(false)
 		return
 	
-	# Ab hier ist _client garantiert valid
+	# _client is guaranteed to be valid here
 	_client.poll()
 	
 	var state = _client.get_ready_state()
 	
 	match state:
 		WebSocketPeer.STATE_CONNECTING:
-			# Still connecting
+			# still connecting
 			pass
 			
 		WebSocketPeer.STATE_OPEN:
-			# Mark as connected
 			if not _is_connected:
 				_is_connected = true
-			
-			# Connection established
 			if not _initialised:
-				print("✓ WebSocket connected!")
-			
-			# Process packets mit extra Safety
+				print("  WebSocket connected!")
+				_initialised = true
 			_process_packets()
 			
 		WebSocketPeer.STATE_CLOSING:
-			# Connection closing
+			# connection closing
 			_is_connected = false
 			
 		WebSocketPeer.STATE_CLOSED:
@@ -151,21 +146,20 @@ func _process(_delta):
 			set_process(false)
 
 func _process_packets():
-	# Extra sichere Packet-Verarbeitung
 	if _client == null or not is_instance_valid(_client):
 		return
 	
-	# Prüfe State nochmal
+	# check state again
 	if _client.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		return
 	
 	var packet_count = _client.get_available_packet_count()
 	
-	# Limit: Max 100 packets pro Frame (verhindert Freeze)
+	# max 100 packets per frame to prevent freeze
 	var max_packets = min(packet_count, 100)
 	
 	for i in range(max_packets):
-		# Check vor JEDEM Packet
+		# check before every packet
 		if _client == null or not is_instance_valid(_client):
 			print("WARNING: Client became null during packet processing")
 			break
@@ -184,11 +178,11 @@ func _on_data(data: PackedByteArray):
 	var message = Message.new()
 	message.from_raw(data)
 	
-	# SERVER LOGIN - Receive our ID
+	# SERVER LOGIN - Receive ID
 	if message.server_login:
 		_id = message.content
 		_initialised = true
-		print("✓ Logged in with ID: ", _id)
+		print("  Logged in with ID: ", _id)
 		emit_signal("on_message", message)
 		return
 	
@@ -205,12 +199,12 @@ func _on_data(data: PackedByteArray):
 			print("ERROR: My ID ", _id, " not in match: ", _match)
 			return
 		
-		print("✓ Match started!")
+		print("  Match started!")
 		print("  My ID: ", _id)
 		print("  My Player Number: ", _player_number)
 		print("  All Players: ", _match)
 		
-		# Mark as ready
+		# mark as ready
 		players_ready = true
 		emit_signal("on_players_ready")
 		emit_signal("on_message", message)
